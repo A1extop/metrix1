@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -47,6 +46,5 @@ func (h *Handler) DerivationMetric(c *gin.Context) {
 		c.Status(http.StatusNotFound)
 		return
 	}
-	fmt.Printf("type - %s, name - %s, value - %s", metricType, metricName, value) // написано он возвращал текущее значение метрики в текстовом виде, я так и не понял, каким образом
-	c.Status(http.StatusOK)
+	c.JSON(http.StatusOK, value)
 }
