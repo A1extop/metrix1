@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"runtime"
 
-	send "github.com/A1extop/metrix1/internal/sendagent"
+	send "github.com/A1extop/metrix1/internal/agentsend"
 )
 
 type MetricUpdater interface {

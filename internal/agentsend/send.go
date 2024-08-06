@@ -1,4 +1,4 @@
-package sendagent
+package agentsend
 
 import (
 	"fmt"
