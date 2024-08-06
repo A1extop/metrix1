@@ -1,13 +1,13 @@
 package http
 
 import (
-	"net/http"
-
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(handler *Handler) *mux.Router {
-	router := mux.NewRouter()
-	router.HandleFunc("/update/{type}/{name}/{value}", handler.Update).Methods(http.MethodPost)
+func NewRouter(handler *Handler) *gin.Engine {
+	router := gin.Default()
+	router.POST("/update/:type/:name/:value", handler.Update)
+	router.GET("/", handler.DerivationMetrics)
+	router.GET("/value/:type/:name", handler.DerivationMetric)
 	return router
 }
