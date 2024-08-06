@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	addr           = flag.String("a", "localhost:8080", "адрес HTTP-сервера")
+	addr           = flag.String("a", "http://localhost:8080", "адрес HTTP-сервера")
 	reportInterval = flag.Int("r", 10, "частота отправки метрик на сервер в секундах")
 	pollInterval   = flag.Int("p", 2, "частота опроса метрик из пакета runtime в секундах")
 )
