@@ -7,7 +7,6 @@ import (
 
 	"github.com/A1extop/metrix1/internal/storage"
 	"github.com/A1extop/metrix1/internal/usecase"
-	"github.com/A1extop/metrix1/pkg/validator"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,10 +22,6 @@ func (h *Handler) Update(c *gin.Context) {
 	metricType := c.Param("type")
 	metricName := c.Param("name")
 	metricValue := c.Param("value")
-
-	if !validator.ValidateRequest(c, "text/plain", metricName) {
-		return
-	}
 
 	err := usecase.UpdateMetric(h.storage, metricType, metricValue, metricName)
 	if err != nil {
