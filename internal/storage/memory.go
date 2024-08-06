@@ -12,7 +12,7 @@ type MetricStorage interface {
 	UpdateCounter(name string, value int64)
 	GetGauge(name string) (float64, bool)
 	GetCounter(name string) (int64, bool)
-	ServerSendMetric(metricName string, metricType string) (string, error)
+	ServerSendMetric(metricName string, metricType string) (interface{}, error)
 	ServerSendAllMetrics(c *gin.Context)
 }
 
@@ -21,15 +21,15 @@ type MemStorage struct {
 	counters map[string]int64
 }
 
-func (m *MemStorage) ServerSendMetric(metricName string, metricType string) (string, error) {
+func (m *MemStorage) ServerSendMetric(metricName string, metricType string) (interface{}, error) {
 	switch metricType {
 	case "gauge":
 		if value, ok := m.gauges[metricName]; ok {
-			return fmt.Sprintf("%f", value), nil
+			return value, nil
 		}
 	case "counter":
 		if value, ok := m.counters[metricName]; ok {
-			return fmt.Sprintf("%d", value), nil
+			return value, nil
 		}
 	}
 	return "", fmt.Errorf("metric not found")
