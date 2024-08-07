@@ -4,13 +4,16 @@ import (
 	"flag"
 )
 
-var lis *string
-
-func Init() {
-	lis = flag.String("a", "localhost:8080", "address HTTP")
-	flag.Parse()
+type Parameters struct {
+	AddressHTTP string
 }
 
-func ListenServerConfig() string {
-	return *lis
+func NewParameters() *Parameters {
+	return &Parameters{AddressHTTP: ""}
+}
+
+func (p *Parameters) GetParameters() {
+	addr := flag.String("a", "localhost:8080", "address HTTP")
+	flag.Parse()
+	p.AddressHTTP = *addr
 }
