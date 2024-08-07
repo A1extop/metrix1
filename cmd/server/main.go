@@ -13,7 +13,7 @@ func main() {
 	newStorage := storage.NewMemStorage()
 	handler := http2.NewHandler(newStorage)
 	router := http2.NewRouter(handler)
-
+	config.Init()
 	addr := config.ListenServerConfig()
 
 	log.Printf("Starting server on port %s", addr)
