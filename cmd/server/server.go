@@ -15,7 +15,7 @@ func main() {
 	router := http2.NewRouter(handler)
 	parameters := config.NewParameters()
 	parameters.GetParameters()
-
+	parameters.GetParametersEnvironmentVariables()
 	log.Printf("Starting server on port %s", parameters.AddressHTTP)
 	err := http.ListenAndServe(parameters.AddressHTTP, router)
 	if err != nil {
