@@ -23,7 +23,7 @@ func main() {
 		case <-pollTicker.C:
 			storage.UpdateMetrics()
 		case <-reportTicker.C:
-			storage.ReportMetrics(client, "http://"+*&parameters.AddressHTTP)
+			storage.ReportMetrics(client, "http://"+parameters.AddressHTTP)
 		}
 	}
 }
