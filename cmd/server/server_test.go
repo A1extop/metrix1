@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	http2 "github.com/A1extop/metrix1/internal/http"
-	"github.com/A1extop/metrix1/internal/storage"
+	http2 "github.com/A1extop/metrix1/internal/server/http"
+	"github.com/A1extop/metrix1/internal/server/storage"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )

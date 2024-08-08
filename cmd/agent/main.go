@@ -5,7 +5,7 @@ import (
 	"time"
 
 	config "github.com/A1extop/metrix1/config/agentconfig"
-	"github.com/A1extop/metrix1/internal/storage"
+	"github.com/A1extop/metrix1/internal/agent/storage"
 )
 
 func main() {

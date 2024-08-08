@@ -1,5 +1,6 @@
 package validator
 
+// не используется, но удалять не стал
 import (
 	"net/http"
 

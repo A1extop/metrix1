@@ -2,9 +2,10 @@ package usecase
 
 import (
 	"fmt"
-	"github.com/A1extop/metrix1/internal/domain"
-	"github.com/A1extop/metrix1/internal/storage"
 	"strconv"
+
+	"github.com/A1extop/metrix1/internal/server/domain"
+	"github.com/A1extop/metrix1/internal/server/storage"
 )
 
 func UpdateMetric(storage storage.MetricStorage, metricType, metricValue, metricName string) error {

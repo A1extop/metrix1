@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	config "github.com/A1extop/metrix1/config/serverconfig"
-	http2 "github.com/A1extop/metrix1/internal/http"
-	"github.com/A1extop/metrix1/internal/storage"
+	http2 "github.com/A1extop/metrix1/internal/server/http"
+	"github.com/A1extop/metrix1/internal/server/storage"
 )
 
 func main() {

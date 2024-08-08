@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"runtime"
 
-	send "github.com/A1extop/metrix1/internal/agentsend"
+	send "github.com/A1extop/metrix1/internal/agent/agentsend"
 )
 
 type MetricUpdater interface {
@@ -14,6 +14,11 @@ type MetricUpdater interface {
 	updateCustomMetrics()
 	UpdateMetrics()
 	ReportMetrics(client *http.Client, serverAddress string)
+}
+
+type MemStorage struct {
+	gauges   map[string]float64
+	counters map[string]int64
 }
 
 func (m *MemStorage) updateRuntimeMetrics() { ////////
@@ -71,5 +76,11 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
 		if err != nil {
 			fmt.Println(err) //оставил, чтобы отслеживать, что происходит
 		}
+	}
+}
+func NewMemStorage() *MemStorage {
+	return &MemStorage{
+		gauges:   make(map[string]float64),
+		counters: make(map[string]int64),
 	}
 }

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/A1extop/metrix1/internal/storage"
-	"github.com/A1extop/metrix1/internal/usecase"
+	"github.com/A1extop/metrix1/internal/server/storage"
+	"github.com/A1extop/metrix1/internal/server/usecase"
 	"github.com/gin-gonic/gin"
 )
 
