@@ -1,4 +1,4 @@
-package main
+package updatereportmetrics
 
 import (
 	"net/http"
@@ -8,20 +8,25 @@ import (
 	"github.com/A1extop/metrix1/internal/agent/storage"
 )
 
-func main() {
-	var storage storage.MetricUpdater = storage.NewMemStorage()
-	parameters := config.NewParameters()
-	parameters.GetParameters()
-	parameters.GetParametersEnvironmentVariables()
+func NewAction(updater storage.MetricUpdater) *Updater {
+	return &Updater{updater: updater}
+}
+
+type Updater struct {
+	updater storage.MetricUpdater
+}
+
+func (u *Updater) Action(parameters *config.Parameters) {
+
 	pollTicker := time.NewTicker(time.Duration(parameters.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(parameters.ReportInterval) * time.Second)
 	client := &http.Client{}
 	for {
 		select {
 		case <-pollTicker.C:
-			storage.UpdateMetrics()
+			u.updater.UpdateMetrics()
 		case <-reportTicker.C:
-			storage.ReportMetrics(client, "http://"+parameters.AddressHTTP)
+			u.updater.ReportMetrics(client, "http://"+parameters.AddressHTTP)
 		}
 	}
 }

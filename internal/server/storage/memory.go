@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"html/template"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,34 +36,21 @@ func (m *MemStorage) ServerSendMetric(metricName string, metricType string) (int
 	return "", fmt.Errorf("metric not found")
 }
 
-var metricsTemplate = template.Must(template.New("metrics").Parse(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Metrics</title>
-</head>
-<body>
-    <h1>Metrics</h1>
-    <h2>Gauges</h2>
-    <ul>
-        {{ range $key, $value := .Gauges }}
-            <li>{{ $key }}: {{ $value }}</li>
-        {{ end }}
-    </ul>
-    <h2>Counters</h2>
-    <ul>
-        {{ range $key, $value := .Counters }}  
-            <li>{{ $key }}: {{ $value }}</li>
-        {{ end }}
-    </ul>
-</body>
-</html>
-`)) // пытался пытался поместить в файл metrics директории template, возникала ошибка
-
 func (m *MemStorage) ServerSendAllMetrics(c *gin.Context) {
 
-	metricsTemplate.Execute(c.Writer, m)
+	metricsTemplate, err := template.ParseFiles("templates/metrics.html")
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Error parsing template: %v", err)
+		return
+	}
+
+	err = metricsTemplate.Execute(c.Writer, m)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Error executing template: %v", err)
+		return
+	}
 }
+
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
 		gauges:   make(map[string]float64),
