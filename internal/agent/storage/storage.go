@@ -77,6 +77,7 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
 			fmt.Println(err) //оставил, чтобы отслеживать, что происходит
 		}
 	}
+	m.counters["PollCount"] = 0
 }
 func NewMemStorage() *MemStorage {
 	return &MemStorage{

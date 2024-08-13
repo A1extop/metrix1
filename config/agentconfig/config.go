@@ -36,12 +36,12 @@ func (p *Parameters) GetParametersEnvironmentVariables() {
 	}
 	repIntervalStr := os.Getenv("REPORT_INTERVAL")
 	repIntervalInt, _ := strconv.Atoi(repIntervalStr)
-	if addr != "" {
+	if repIntervalStr != "" {
 		p.ReportInterval = repIntervalInt
 	}
 	pollIntervalStr := os.Getenv("POLL_INTERVAL")
 	pollIntervalInt, _ := strconv.Atoi(pollIntervalStr)
-	if addr != "" {
+	if pollIntervalStr != "" {
 		p.PollInterval = pollIntervalInt
 	}
 
