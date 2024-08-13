@@ -38,7 +38,6 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -57,17 +56,13 @@ jobs:
           chmod -R +x $GITHUB_WORKSPACE/.tools
           mv $GITHUB_WORKSPACE/.tools/metricstest /usr/local/bin/metricstest
           mv $GITHUB_WORKSPACE/.tools/random /usr/local/bin/random
-
       - name: Setup go deps
         run: |
           go install golang.org/x/tools/cmd/goimports@latest
-
-
       - name: Build server binary
         run: |
           cd cmd/server
           go build -buildvcs=false -o server
-
       - name: "Code increment #1"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -88,12 +83,10 @@ jobs:
         run: |
           metricstest -test.v -test.run=^TestIteration1$ \
             -binary-path=cmd/server/server
-
       - name: Build agent binary
         run: |
           cd cmd/agent
           go build -buildvcs=false  -o agent
-
       - name: "Code increment #2"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -114,7 +107,6 @@ jobs:
           metricstest -test.v -test.run=^TestIteration2[AB]*$ \
             -source-path=. \
             -agent-binary-path=cmd/agent/agent
-
       - name: "Code increment #3"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -135,7 +127,6 @@ jobs:
             -source-path=. \
             -agent-binary-path=cmd/agent/agent \
             -binary-path=cmd/server/server
-
       - name: "Code increment #4"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -159,7 +150,6 @@ jobs:
             -binary-path=cmd/server/server \
             -server-port=$SERVER_PORT \
             -source-path=.
-
       - name: "Code increment #5"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -182,7 +172,6 @@ jobs:
             -binary-path=cmd/server/server \
             -server-port=$SERVER_PORT \
             -source-path=.
-
       - name: "Code increment #6"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -204,7 +193,6 @@ jobs:
             -binary-path=cmd/server/server \
             -server-port=$SERVER_PORT \
             -source-path=.
-
       - name: "Code increment #7"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -225,7 +213,6 @@ jobs:
             -binary-path=cmd/server/server \
             -server-port=$SERVER_PORT \
             -source-path=.
-
       - name: "Code increment #8"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -245,7 +232,6 @@ jobs:
             -binary-path=cmd/server/server \
             -server-port=$SERVER_PORT \
             -source-path=.
-
       - name: "Code increment #9"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -265,7 +251,6 @@ jobs:
             -file-storage-path=$TEMP_FILE \
             -server-port=$SERVER_PORT \
             -source-path=.
-
       - name: "Code increment #10"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -284,7 +269,6 @@ jobs:
             -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable' \
             -server-port=$SERVER_PORT \
             -source-path=.
-
       - name: "Code increment #11"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -302,7 +286,6 @@ jobs:
             -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable' \
             -server-port=$SERVER_PORT \
             -source-path=.
-
       - name: "Code increment #12"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -319,7 +302,6 @@ jobs:
             -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable' \
             -server-port=$SERVER_PORT \
             -source-path=.
-
       - name: "Code increment #13"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -335,7 +317,6 @@ jobs:
             -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable' \
             -server-port=$SERVER_PORT \
             -source-path=.
-
       - name: "Code increment #14"
         if: |
           github.ref == 'refs/heads/main' ||
@@ -351,7 +332,6 @@ jobs:
             -key="${TEMP_FILE}" \
             -server-port=$SERVER_PORT \
             -source-path=.
-
       - name: "Code increment #14 (race detection)"
         if: |
           github.ref == 'refs/heads/main' ||
