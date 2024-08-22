@@ -103,10 +103,10 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
+	c.Header("Content-Type", "application/json")
 	c.Writer.Write(metric)
 	currentTime := time.Now().Format(time.RFC1123)
 	c.Header("Date", currentTime)
-	c.Header("Content-Type", "application/json")
 	c.Status(http.StatusOK)
 }
 
@@ -142,9 +142,9 @@ func (h *Handler) GetJSON(c *gin.Context) {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
+	c.Header("Content-Type", "application/json")
 	c.Writer.Write(metricJs)
 	currentTime := time.Now().Format(time.RFC1123)
 	c.Header("Date", currentTime)
-	c.Header("Content-Type", "application/json")
 	c.Status(http.StatusOK)
 }
