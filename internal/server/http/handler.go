@@ -53,8 +53,8 @@ func (h *Handler) DerivationMetric(c *gin.Context) {
 	c.JSON(http.StatusOK, value)
 }
 
-func (h *Handler) UpdateJson(c *gin.Context) {
-	metricsJs, err := js.GetParametersJson(c)
+func (h *Handler) UpdateJSON(c *gin.Context) {
+	metricsJs, err := js.GetParametersJSON(c)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
@@ -106,12 +106,12 @@ func (h *Handler) UpdateJson(c *gin.Context) {
 	c.Writer.Write(metric)
 	currentTime := time.Now().Format(time.RFC1123)
 	c.Header("Date", currentTime)
-	c.Header("Content-Type", "text/plain; charset=utf-8")
+	c.Header("Content-Type", "application/json")
 	c.Status(http.StatusOK)
 }
 
 func (h *Handler) GetJSON(c *gin.Context) {
-	metrics, err := js.GetParametersJson(c)
+	metrics, err := js.GetParametersJSON(c)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
@@ -145,6 +145,6 @@ func (h *Handler) GetJSON(c *gin.Context) {
 	c.Writer.Write(metricJs)
 	currentTime := time.Now().Format(time.RFC1123)
 	c.Header("Date", currentTime)
-	c.Header("Content-Type", "text/plain; charset=utf-8")
+	c.Header("Content-Type", "application/json")
 	c.Status(http.StatusOK)
 }

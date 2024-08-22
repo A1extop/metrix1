@@ -10,7 +10,7 @@ func NewRouter(handler *Handler) *gin.Engine {
 	log := logging.New()
 
 	router.POST("/update/:type/:name/:value", logging.LoggingPost(log), handler.Update)
-	router.POST("/update/", logging.LoggingPost(log), handler.UpdateJson)
+	router.POST("/update/", logging.LoggingPost(log), handler.UpdateJSON)
 
 	router.POST("/value/", logging.LoggingPost(log), handler.GetJSON)
 
