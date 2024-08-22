@@ -16,7 +16,7 @@ type Metrics struct {
 func NewMetrics() *Metrics {
 	return &Metrics{}
 }
-func GetParametersJson(c *gin.Context) (*Metrics, error) {
+func GetParametersJSON(c *gin.Context) (*Metrics, error) {
 	metric := NewMetrics()
 	if err := json.NewDecoder(c.Request.Body).Decode(metric); err != nil {
 		return nil, err

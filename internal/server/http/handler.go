@@ -110,7 +110,7 @@ func (h *Handler) UpdateJson(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (h *Handler) GetJson(c *gin.Context) {
+func (h *Handler) GetJSON(c *gin.Context) {
 	metrics, err := js.GetParametersJson(c)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
