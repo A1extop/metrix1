@@ -67,7 +67,7 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 			c.String(http.StatusBadRequest, "missing value for gauge metric")
 			return
 		}
-		metricValue = fmt.Sprintf("%f", *metricsJs.Value)
+		metricValue = fmt.Sprintf("%g", *metricsJs.Value)
 	case "counter":
 		if metricsJs.Delta == nil {
 			c.String(http.StatusBadRequest, "missing value for counter metric")
