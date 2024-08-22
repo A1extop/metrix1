@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -73,7 +73,8 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
 		metric.MType = "gauge" //
 		err := send.SendMetric(client, serverAddress, metric)
 		if err != nil {
-			fmt.Println(err) //оставил, чтобы отслеживать, что происходит
+			log.Printf("Не удалось отправить метрику %s, тип - %s: %s", name, metric.MType, err.Error())
+
 		}
 	}
 	for name, value := range m.counters {
@@ -83,7 +84,7 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
 		metric.Delta = &value
 		err := send.SendMetric(client, serverAddress, metric)
 		if err != nil {
-			fmt.Println(err) //оставил, чтобы отслеживать, что происходит
+			log.Printf("Не удалось отправить метрику %s, тип - %s: %s", name, metric.MType, err.Error())
 		}
 	}
 	m.counters["PollCount"] = 0

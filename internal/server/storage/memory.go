@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/A1extop/metrix1/internal/server/domain"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,12 +24,12 @@ type MemStorage struct {
 }
 
 func (m *MemStorage) ServerSendMetric(metricName string, metricType string) (interface{}, error) {
-	switch metricType {
-	case "gauge":
+	switch domain.MetricType(metricType) {
+	case domain.Gauge:
 		if value, ok := m.gauges[metricName]; ok {
 			return value, nil
 		}
-	case "counter":
+	case domain.Counter:
 		if value, ok := m.counters[metricName]; ok {
 			return value, nil
 		}

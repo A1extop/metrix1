@@ -7,6 +7,7 @@ import (
 
 	"fmt"
 
+	"github.com/A1extop/metrix1/internal/server/domain"
 	js "github.com/A1extop/metrix1/internal/server/json"
 	"github.com/A1extop/metrix1/internal/server/storage"
 	"github.com/A1extop/metrix1/internal/server/usecase"
@@ -61,14 +62,15 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 	}
 	var metricValue string
 
-	switch metricsJs.MType {
-	case "gauge":
+	switch domain.MetricType(metricsJs.MType) {
+
+	case domain.Gauge:
 		if metricsJs.Value == nil {
 			c.String(http.StatusBadRequest, "missing value for gauge metric")
 			return
 		}
 		metricValue = fmt.Sprintf("%g", *metricsJs.Value)
-	case "counter":
+	case domain.Counter:
 		if metricsJs.Delta == nil {
 			c.String(http.StatusBadRequest, "missing value for counter metric")
 			return
@@ -78,13 +80,14 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 		c.String(http.StatusBadRequest, "invalid metric type")
 		return
 	}
-	err = usecase.UpdateMetric(h.storage, metricsJs.MType, metricValue, metricsJs.ID)
+
+	err = usecase.UpdateMetric(h.storage, metricsJs.MType, metricValue, metricsJs.ID) //
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	//
-	if metricsJs.MType == "counter" {
+
+	if domain.MetricType(metricsJs.MType) == domain.Counter {
 		valueInterface, err := h.storage.ServerSendMetric(metricsJs.ID, metricsJs.MType)
 		if err != nil {
 			c.Status(http.StatusNotFound)
@@ -121,15 +124,15 @@ func (h *Handler) GetJSON(c *gin.Context) {
 		c.Status(http.StatusNotFound)
 		return
 	}
-	switch metrics.MType {
-	case "counter":
+	switch domain.MetricType(metrics.MType) {
+	case domain.Counter:
 		if delta, ok := valueInterface.(int64); ok {
 			metrics.Delta = &delta
 		} else {
 			c.String(http.StatusBadRequest, "Invalid type for counter")
 			return
 		}
-	case "gauge":
+	case domain.Gauge:
 		if value, ok := valueInterface.(float64); ok {
 			metrics.Value = &value
 		} else {
