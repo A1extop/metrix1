@@ -11,7 +11,6 @@ import (
 func UpdateMetric(storage storage.MetricStorage, metricType, metricValue, metricName string) error {
 	var value interface{}
 	var err error
-
 	switch domain.MetricType(metricType) {
 	case domain.Gauge:
 		value, err = strconv.ParseFloat(metricValue, 64)

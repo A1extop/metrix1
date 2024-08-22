@@ -10,6 +10,10 @@ func NewRouter(handler *Handler) *gin.Engine {
 	log := logging.New()
 
 	router.POST("/update/:type/:name/:value", logging.LoggingPost(log), handler.Update)
+	router.POST("/update/", logging.LoggingPost(log), handler.UpdateJson)
+
+	router.POST("/value/", logging.LoggingPost(log), handler.GetJson)
+
 	router.GET("/", logging.LoggingGet(log), handler.DerivationMetrics)
 	router.GET("/value/:type/:name", logging.LoggingGet(log), handler.DerivationMetric)
 	return router

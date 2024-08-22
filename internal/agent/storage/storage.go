@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	send "github.com/A1extop/metrix1/internal/agent/agentsend"
+	js "github.com/A1extop/metrix1/internal/agent/json"
 )
 
 type MetricUpdater interface {
@@ -21,7 +22,7 @@ type MemStorage struct {
 	counters map[string]int64
 }
 
-func (m *MemStorage) updateRuntimeMetrics() { ////////
+func (m *MemStorage) updateRuntimeMetrics() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 
@@ -54,25 +55,33 @@ func (m *MemStorage) updateRuntimeMetrics() { ////////
 	m.gauges["TotalAlloc"] = float64(memStats.TotalAlloc)
 }
 
-func (m *MemStorage) updateCustomMetrics() { ///////
+func (m *MemStorage) updateCustomMetrics() {
 	m.counters["PollCount"]++
 	m.gauges["RandomValue"] = rand.Float64()
 }
 
-func (m *MemStorage) UpdateMetrics() { /////////
+func (m *MemStorage) UpdateMetrics() {
 	m.updateRuntimeMetrics()
 	m.updateCustomMetrics()
 }
 
 func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
 	for name, value := range m.gauges {
-		err := send.SendMetric(client, serverAddress, "gauge", name, value)
+		metric := js.NewMetrics()
+		metric.ID = name
+		metric.Value = &value
+		metric.MType = "gauge" //
+		err := send.SendMetric(client, serverAddress, metric)
 		if err != nil {
 			fmt.Println(err) //оставил, чтобы отслеживать, что происходит
 		}
 	}
 	for name, value := range m.counters {
-		err := send.SendMetric(client, serverAddress, "counter", name, value)
+		metric := js.NewMetrics()
+		metric.ID = name
+		metric.MType = "counter" //
+		metric.Delta = &value
+		err := send.SendMetric(client, serverAddress, metric)
 		if err != nil {
 			fmt.Println(err) //оставил, чтобы отслеживать, что происходит
 		}
