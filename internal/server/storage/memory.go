@@ -38,7 +38,7 @@ func (m *MemStorage) ServerSendMetric(metricName string, metricType string) (int
 }
 
 func (m *MemStorage) ServerSendAllMetrics(c *gin.Context) {
-
+	c.Header("Content-Type", "text/html")
 	metricsTemplate, err := template.ParseFiles("templates/metrics.html")
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Error parsing template: %v", err)
