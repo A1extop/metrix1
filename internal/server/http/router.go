@@ -15,7 +15,7 @@ func NewRouter(handler *Handler) *gin.Engine {
 
 	router.POST("/value/", compress.CompressData(), logging.LoggingPost(log), handler.GetJSON)
 
-	router.GET("/", logging.LoggingGet(log), handler.DerivationMetrics)
+	router.GET("/", compress.CompressData(), logging.LoggingGet(log), handler.DerivationMetrics)
 	router.GET("/value/:type/:name", logging.LoggingGet(log), handler.DerivationMetric)
 	return router
 }

@@ -23,6 +23,7 @@ func newCompressWriter(w gin.ResponseWriter) *compressWriter {
 		zw: gzip.NewWriter(w),
 	}
 }
+
 func (c compressWriter) Header() http.Header {
 	return c.w.Header()
 }
@@ -43,10 +44,12 @@ func (c compressWriter) Flush() {
 }
 
 func (c compressWriter) CloseNotify() <-chan bool {
-	if closeNotifier, ok := c.w.(http.CloseNotifier); ok {
-		return closeNotifier.CloseNotify()
-	}
-	return make(<-chan bool)
+	// Создаем канал типа bool
+	notify := make(chan bool)
+
+	close(notify)
+
+	return notify
 }
 
 func (c compressWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
@@ -94,6 +97,7 @@ func CompressData() gin.HandlerFunc {
 		c.Writer = gzw
 
 		c.Next()
+
 		gzw.zw.Close()
 	}
 }
