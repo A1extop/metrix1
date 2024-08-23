@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/A1extop/metrix1/internal/server/compress"
 	"github.com/A1extop/metrix1/internal/server/logging"
 	"github.com/gin-gonic/gin"
 )
@@ -10,9 +11,9 @@ func NewRouter(handler *Handler) *gin.Engine {
 	log := logging.New()
 
 	router.POST("/update/:type/:name/:value", logging.LoggingPost(log), handler.Update)
-	router.POST("/update/", logging.LoggingPost(log), handler.UpdateJSON)
+	router.POST("/update/", compress.DeCompressData(), logging.LoggingPost(log), handler.UpdateJSON)
 
-	router.POST("/value/", logging.LoggingPost(log), handler.GetJSON)
+	router.POST("/value/", compress.CompressData(), logging.LoggingPost(log), handler.GetJSON)
 
 	router.GET("/", logging.LoggingGet(log), handler.DerivationMetrics)
 	router.GET("/value/:type/:name", logging.LoggingGet(log), handler.DerivationMetric)
