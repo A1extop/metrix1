@@ -14,7 +14,7 @@ type Producer struct {
 
 func NewProducer(filePath string) (*Producer, error) {
 
-	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return nil, err
 	}
@@ -33,6 +33,9 @@ func (p *Producer) WriteEvent(metricSt storage.MetricStorage) error {
 }
 
 func WritingToDisk(times int, fileStoragePath string, memstorage *storage.MemStorage) {
+	if fileStoragePath == "" {
+		return
+	}
 	ticker := time.NewTicker(time.Duration(times) * time.Second)
 	defer ticker.Stop()
 	produc, err := NewProducer(fileStoragePath)
@@ -69,4 +72,16 @@ func NewConsumer(filename string) (*Consumer, error) {
 
 func (c *Consumer) Close() error {
 	return c.file.Close()
+}
+func ReadingFromDisk(fileStoragePath string, memstorage *storage.MemStorage) {
+	if fileStoragePath == "" {
+		return
+	}
+	cons, err := NewConsumer(fileStoragePath)
+	if err != nil {
+		log.Printf("Failed to open file for reading: %v", err)
+		return
+	}
+	defer cons.Close()
+	err = memstorage.RecordingMetricsFile(cons.file)
 }

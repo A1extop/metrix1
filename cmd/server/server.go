@@ -17,7 +17,9 @@ func main() {
 	parameters := config.NewParameters()
 	parameters.GetParameters()
 	parameters.GetParametersEnvironmentVariables()
-
+	if parameters.Restore == true {
+		data.ReadingFromDisk(parameters.FileStoragePath, newStorage)
+	}
 	go data.WritingToDisk(parameters.StoreInterval, parameters.FileStoragePath, newStorage)
 
 	log.Printf("Starting server on port %s", parameters.AddressHTTP)
