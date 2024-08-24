@@ -1,9 +1,12 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/A1extop/metrix1/internal/server/domain"
 	"github.com/gin-gonic/gin"
@@ -15,7 +18,9 @@ type MetricStorage interface {
 	GetGauge(name string) (float64, bool)
 	GetCounter(name string) (int64, bool)
 	ServerSendMetric(metricName string, metricType string) (interface{}, error)
-	ServerSendAllMetrics(c *gin.Context)
+	ServerSendAllMetricsHTML(c *gin.Context)
+	ServerSendAllMetrics(*os.File) error
+	RecordingMetricsFile(*os.File) error
 }
 
 type MemStorage struct {
@@ -23,6 +28,34 @@ type MemStorage struct {
 	counters map[string]int64
 }
 
+func (m *MemStorage) RecordingMetricsFile(file *os.File) error {
+	var loadedGauges map[string]float64
+	var loadedCounters map[string]int64
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("error getting file info: %v", err)
+	}
+
+	fileSize := fileInfo.Size()
+	if fileSize == 0 {
+		log.Println("File is empty, no metrics to restore.")
+		return nil
+	}
+	data := make([]byte, fileSize)
+	if err := json.Unmarshal(data, &loadedGauges); err != nil {
+		log.Printf("Error deserializing gauges: %v", err)
+		return fmt.Errorf("error deserializing gauges: %v", err)
+	}
+	m.gauges = loadedGauges
+
+	if err := json.Unmarshal(data, &loadedCounters); err != nil {
+		log.Printf("Error deserializing counters: %v", err)
+		return fmt.Errorf("error deserializing counters: %v", err)
+	}
+	m.counters = loadedCounters
+	log.Println("Metrics successfully restored from file")
+	return nil
+}
 func (m *MemStorage) ServerSendMetric(metricName string, metricType string) (interface{}, error) {
 	switch domain.MetricType(metricType) {
 	case domain.Gauge:
@@ -37,7 +70,7 @@ func (m *MemStorage) ServerSendMetric(metricName string, metricType string) (int
 	return "", fmt.Errorf("metric not found")
 }
 
-func (m *MemStorage) ServerSendAllMetrics(c *gin.Context) {
+func (m *MemStorage) ServerSendAllMetricsHTML(c *gin.Context) {
 	c.Header("Content-Type", "text/html")
 	metricsTemplate, err := template.ParseFiles("templates/metrics.html")
 	if err != nil {
@@ -50,6 +83,25 @@ func (m *MemStorage) ServerSendAllMetrics(c *gin.Context) {
 		c.String(http.StatusInternalServerError, "Error executing template: %v", err)
 		return
 	}
+}
+func (m *MemStorage) ServerSendAllMetrics(file *os.File) error {
+	dataGauges, err := json.MarshalIndent(m.gauges, "", " ")
+	if err != nil {
+		log.Println("Error serializing data:", err)
+		return fmt.Errorf("Error serializing data: %v", err)
+	}
+	dataCounters, err := json.MarshalIndent(m.counters, "", " ")
+	if err != nil {
+		return fmt.Errorf("Error serializing data: %v", err)
+	}
+	if _, err := file.Write(dataGauges); err != nil {
+		return fmt.Errorf("Error writing to file: %v", err)
+	}
+	if _, err := file.Write(dataCounters); err != nil {
+		return fmt.Errorf("Error writing to file: %v", err)
+	}
+	log.Println("Metrics successfully written to file ")
+	return nil
 }
 
 func NewMemStorage() *MemStorage {

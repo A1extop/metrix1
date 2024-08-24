@@ -40,7 +40,7 @@ func (h *Handler) Update(c *gin.Context) {
 }
 
 func (h *Handler) DerivationMetrics(c *gin.Context) {
-	h.storage.ServerSendAllMetrics(c)
+	h.storage.ServerSendAllMetricsHTML(c)
 	c.Status(http.StatusOK)
 }
 func (h *Handler) DerivationMetric(c *gin.Context) {
