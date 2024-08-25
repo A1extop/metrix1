@@ -33,7 +33,7 @@ func (p *Producer) WriteEvent(metricSt storage.MetricStorage) error {
 	return err
 }
 
-func WritingToDisk(times int, fileStoragePath string, memstorage *storage.MemStorage) {
+func WritingToDisk(times int, fileStoragePath string, memStorage *storage.MemStorage) {
 	if fileStoragePath == "" {
 		return
 	}
@@ -49,7 +49,7 @@ func WritingToDisk(times int, fileStoragePath string, memstorage *storage.MemSto
 	for {
 		select {
 		case <-ticker.C:
-			err := produc.WriteEvent(memstorage)
+			err := produc.WriteEvent(memStorage)
 			if err != nil {
 				log.Printf("error writing to file: %v", err)
 			}
@@ -57,12 +57,13 @@ func WritingToDisk(times int, fileStoragePath string, memstorage *storage.MemSto
 	}
 }
 
-func ReadingFromDisk(fileStoragePath string, memstorage *storage.MemStorage) {
+func ReadingFromDisk(fileStoragePath string, memStorage *storage.MemStorage) {
 	if fileStoragePath == "" {
+		log.Printf("fileStoragePath empty")
 		return
 	}
 	file, err := os.Open(fileStoragePath)
-	err = memstorage.RecordingMetricsFile(file)
+	err = memStorage.RecordingMetricsFile(file)
 	defer file.Close()
 	if err != nil {
 		log.Println(err)

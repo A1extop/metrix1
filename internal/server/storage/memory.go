@@ -85,17 +85,17 @@ func (m *MemStorage) ServerSendAllMetrics(file *os.File) error {
 	dataGauges, err := json.MarshalIndent(m.gauges, "", " ")
 	if err != nil {
 		log.Println("Error serializing data:", err)
-		return fmt.Errorf("Error serializing data: %v", err)
+		return fmt.Errorf("error serializing data: %v", err)
 	}
 	dataCounters, err := json.MarshalIndent(m.counters, "", " ")
 	if err != nil {
-		return fmt.Errorf("Error serializing data: %v", err)
+		return fmt.Errorf("error serializing data: %v", err)
 	}
 	if _, err := file.Write(dataGauges); err != nil {
-		return fmt.Errorf("Error writing to file: %v", err)
+		return fmt.Errorf("error writing to file: %v", err)
 	}
 	if _, err := file.Write(dataCounters); err != nil {
-		return fmt.Errorf("Error writing to file: %v", err)
+		return fmt.Errorf("error writing to file: %v", err)
 	}
 	log.Println("Metrics successfully written to file ")
 	return nil

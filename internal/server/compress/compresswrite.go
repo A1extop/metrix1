@@ -44,7 +44,6 @@ func (c compressWriter) Flush() {
 }
 
 func (c compressWriter) CloseNotify() <-chan bool {
-	// Создаем канал типа bool
 	notify := make(chan bool)
 
 	close(notify)
