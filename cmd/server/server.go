@@ -17,7 +17,7 @@ func main() {
 	parameters := config.NewParameters()
 	parameters.GetParameters()
 	parameters.GetParametersEnvironmentVariables()
-	if parameters.Restore == true {
+	if parameters.Restore {
 		data.ReadingFromDisk(parameters.FileStoragePath, newStorage)
 	}
 	go data.WritingToDisk(parameters.StoreInterval, parameters.FileStoragePath, newStorage)

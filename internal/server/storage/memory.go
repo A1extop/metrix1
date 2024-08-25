@@ -31,6 +31,7 @@ type MemStorage struct {
 func (m *MemStorage) RecordingMetricsFile(file *os.File) error {
 	var loadedGauges map[string]float64
 	var loadedCounters map[string]int64
+
 	fileInfo, err := file.Stat()
 	if err != nil {
 		return fmt.Errorf("error getting file info: %v", err)
@@ -38,20 +39,16 @@ func (m *MemStorage) RecordingMetricsFile(file *os.File) error {
 
 	fileSize := fileInfo.Size()
 	if fileSize == 0 {
-		log.Println("File is empty, no metrics to restore.")
-		return nil
+		return fmt.Errorf("file is empty, no metrics to restore:%v", err)
 	}
-	data := make([]byte, fileSize)
-	if err := json.Unmarshal(data, &loadedGauges); err != nil {
-		log.Printf("Error deserializing gauges: %v", err)
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&loadedGauges); err != nil {
 		return fmt.Errorf("error deserializing gauges: %v", err)
 	}
-	m.gauges = loadedGauges
-
-	if err := json.Unmarshal(data, &loadedCounters); err != nil {
-		log.Printf("Error deserializing counters: %v", err)
+	if err := decoder.Decode(&loadedCounters); err != nil {
 		return fmt.Errorf("error deserializing counters: %v", err)
 	}
+	m.gauges = loadedGauges
 	m.counters = loadedCounters
 	log.Println("Metrics successfully restored from file")
 	return nil

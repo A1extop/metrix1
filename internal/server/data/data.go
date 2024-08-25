@@ -27,7 +27,8 @@ func (p *Producer) Close() error {
 }
 
 func (p *Producer) WriteEvent(metricSt storage.MetricStorage) error {
-
+	p.file.Truncate(0)
+	p.file.Seek(0, 0)
 	err := metricSt.ServerSendAllMetrics(p.file)
 	return err
 }
@@ -56,32 +57,15 @@ func WritingToDisk(times int, fileStoragePath string, memstorage *storage.MemSto
 	}
 }
 
-type Consumer struct {
-	file *os.File
-}
-
-func NewConsumer(filename string) (*Consumer, error) {
-
-	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Consumer{file: file}, nil
-}
-
-func (c *Consumer) Close() error {
-	return c.file.Close()
-}
 func ReadingFromDisk(fileStoragePath string, memstorage *storage.MemStorage) {
 	if fileStoragePath == "" {
 		return
 	}
-	cons, err := NewConsumer(fileStoragePath)
+	file, err := os.Open(fileStoragePath)
+	err = memstorage.RecordingMetricsFile(file)
+	defer file.Close()
 	if err != nil {
-		log.Printf("Failed to open file for reading: %v", err)
+		log.Println(err)
 		return
 	}
-	defer cons.Close()
-	err = memstorage.RecordingMetricsFile(cons.file)
 }
