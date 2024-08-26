@@ -22,8 +22,8 @@ func NewParameters() *Parameters {
 
 func (p *Parameters) GetParameters() {
 	addr := flag.String("a", "localhost:8080", "address HTTP")
-	reportInterval := flag.Int("r", 10, "частота отправки метрик на сервер в секундах")
-	pollInterval := flag.Int("p", 2, "частота опроса метрик из пакета runtime в секундах")
+	reportInterval := flag.Int("r", 10, "frequency of sending metrics to the server in seconds")
+	pollInterval := flag.Int("p", 2, "frequency of polling metrics from the runtime package in seconds")
 	flag.Parse()
 	p.AddressHTTP = *addr
 	p.PollInterval = *pollInterval

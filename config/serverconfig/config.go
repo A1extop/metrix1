@@ -27,7 +27,7 @@ func (p *Parameters) GetParameters() {
 	addr := flag.String("a", "localhost:8080", "address HTTP")
 	storeInterval := flag.Int("i", 300, "the time interval in seconds after which the current server readings are saved to disk")
 	fileStoragePath := flag.String("f", "", "the path to the file where the current values are saved")
-	restore := flag.Bool("r", true, "whether or not to load previously saved values ​​from the specified file when the server starts")
+	restore := flag.Bool("r", true, "whether or not to load previously saved values from the specified file when the server starts")
 	flag.Parse()
 	p.AddressHTTP = *addr
 	p.StoreInterval = *storeInterval
