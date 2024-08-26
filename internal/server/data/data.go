@@ -46,12 +46,12 @@ func WritingToDisk(times int, fileStoragePath string, memStorage *storage.MemSto
 	}
 	defer produc.Close()
 
-	for tick := range ticker.C {
-        err := produc.WriteEvent(memStorage)
-        if err != nil {
-            log.Printf("error writing to file: %v", err)
-        }
-    }
+	for range ticker.C {
+		err := produc.WriteEvent(memStorage)
+		if err != nil {
+			log.Printf("error writing to file: %v", err)
+		}
+	}
 }
 
 func ReadingFromDisk(fileStoragePath string, memStorage *storage.MemStorage) {
@@ -60,7 +60,7 @@ func ReadingFromDisk(fileStoragePath string, memStorage *storage.MemStorage) {
 		return
 	}
 	file, err := os.Open(fileStoragePath)
-	if err != nil{
+	if err != nil {
 		log.Println(err)
 		return
 	}
