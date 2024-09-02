@@ -84,7 +84,6 @@ func (m *MemStorage) ServerSendAllMetricsHTML(c *gin.Context) {
 func (m *MemStorage) ServerSendAllMetrics(file *os.File) error {
 	dataGauges, err := json.MarshalIndent(m.gauges, "", " ")
 	if err != nil {
-		log.Println("Error serializing data:", err)
 		return fmt.Errorf("error serializing data: %v", err)
 	}
 	dataCounters, err := json.MarshalIndent(m.counters, "", " ")
