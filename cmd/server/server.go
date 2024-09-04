@@ -14,6 +14,7 @@ func main() {
 	newStorage := storage.NewMemStorage()
 	handler := http2.NewHandler(newStorage)
 	router := http2.NewRouter(handler)
+
 	parameters := config.NewParameters()
 	parameters.GetParameters()
 	parameters.GetParametersEnvironmentVariables()
