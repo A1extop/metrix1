@@ -21,7 +21,7 @@ func TestUpdateMetric(t *testing.T) {
 	handler := http2.NewHandler(memStorage)
 	storageDB, err := psql.ConnectDB("") //заглушка
 	if err != nil {
-		log.Panicln("error connecting to database - %v", err)
+		log.Printf("error connecting to database - %v", err)
 	}
 	store := psql.NewStore(storageDB)
 	repos := psql.NewRepository(store)
