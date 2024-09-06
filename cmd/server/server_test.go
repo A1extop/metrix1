@@ -5,8 +5,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"log"
+
 	http2 "github.com/A1extop/metrix1/internal/server/http"
 	"github.com/A1extop/metrix1/internal/server/storage"
+	psql "github.com/A1extop/metrix1/internal/server/store/postgrestore"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +19,13 @@ func TestUpdateMetric(t *testing.T) {
 
 	memStorage := storage.NewMemStorage()
 	handler := http2.NewHandler(memStorage)
-	router := http2.NewRouter(handler)
+	storageDB, err := psql.ConnectDB("") //заглушка
+	if err != nil {
+		log.Panicln("error connecting to database - %v", err)
+	}
+	store := psql.NewStore(storageDB)
+	repos := psql.NewRepository(store)
+	router := http2.NewRouter(handler, repos)
 
 	tests := []struct {
 		metricType  string
@@ -52,7 +61,14 @@ func TestGetMetric(t *testing.T) {
 
 	memStorage := storage.NewMemStorage()
 	handler := http2.NewHandler(memStorage)
-	router := http2.NewRouter(handler)
+
+	storageDB, err := psql.ConnectDB("") //заглушка
+	if err != nil {
+		log.Printf("error connecting to database - %v", err)
+	}
+	store := psql.NewStore(storageDB)
+	repos := psql.NewRepository(store)
+	router := http2.NewRouter(handler, repos)
 
 	memStorage.UpdateGauge("testGauge", 100.3434)
 

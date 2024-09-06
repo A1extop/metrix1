@@ -12,6 +12,7 @@ type Parameters struct {
 	StoreInterval   int
 	FileStoragePath string
 	Restore         bool
+	AddrDB          string
 }
 
 func NewParameters() *Parameters {
@@ -28,13 +29,14 @@ func (p *Parameters) GetParameters() {
 	storeInterval := flag.Int("i", 300, "the time interval in seconds after which the current server readings are saved to disk")
 	fileStoragePath := flag.String("f", "", "the path to the file where the current values are saved")
 	restore := flag.Bool("r", true, "whether or not to load previously saved values from the specified file when the server starts")
+	addrDB := flag.String("d", "", "String with database connection address")
 	flag.Parse()
 	p.AddressHTTP = *addr
 	p.StoreInterval = *storeInterval
 	p.FileStoragePath = *fileStoragePath
 	p.Restore = *restore
+	p.AddrDB = *addrDB
 }
-
 func (p *Parameters) GetParametersEnvironmentVariables() {
 	addr := os.Getenv("ADDRESS")
 	if addr != "" {
@@ -61,5 +63,9 @@ func (p *Parameters) GetParametersEnvironmentVariables() {
 		} else {
 			p.Restore = restore
 		}
+	}
+	addrDB := os.Getenv("DATABASE_DSN")
+	if addrDB != "" {
+		p.AddrDB = addrDB
 	}
 }

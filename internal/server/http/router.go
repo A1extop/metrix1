@@ -3,10 +3,11 @@ package http
 import (
 	"github.com/A1extop/metrix1/internal/server/compress"
 	"github.com/A1extop/metrix1/internal/server/logging"
+	psql "github.com/A1extop/metrix1/internal/server/store/postgrestore"
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(handler *Handler) *gin.Engine {
+func NewRouter(handler *Handler, repos *psql.Repository) *gin.Engine {
 	router := gin.New()
 	log := logging.New()
 
@@ -17,5 +18,7 @@ func NewRouter(handler *Handler) *gin.Engine {
 
 	router.GET("/", compress.CompressData(), logging.LoggingGet(log), handler.DerivationMetrics)
 	router.GET("/value/:type/:name", logging.LoggingGet(log), handler.DerivationMetric)
+
+	router.GET("/ping", logging.LoggingGet(log), repos.Ping)
 	return router
 }

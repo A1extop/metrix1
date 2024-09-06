@@ -151,3 +151,6 @@ func (h *Handler) GetJSON(c *gin.Context) {
 	c.Header("Date", currentTime)
 	c.Status(http.StatusOK)
 }
+func (h *Handler) CheckConnect() {
+
+}
