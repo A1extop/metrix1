@@ -23,9 +23,13 @@ func main() {
 	if err != nil {
 		log.Println("Failed to connect to database at startup:", err)
 	}
-
 	store := psql.NewStore(db)
 	repos := psql.NewRepository(store)
+	if db != nil {
+		psql.CreateOrConnectTable(db)
+		go psql.WritingToBD(repos, parameters.StoreInterval, parameters.AddrDB, newStorage)
+
+	}
 
 	router := http2.NewRouter(handler, repos)
 

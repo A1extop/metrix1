@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -21,11 +22,67 @@ type MetricStorage interface {
 	ServerSendAllMetricsHTML(c *gin.Context)
 	ServerSendAllMetrics(*os.File) error
 	RecordingMetricsFile(*os.File) error
+	RecordingMetricsDB(db *sql.DB) error
 }
 
 type MemStorage struct {
 	gauges   map[string]float64
 	counters map[string]int64
+}
+
+func isTypeExists(db *sql.DB, typeName string, tablesName string) (bool, error) {
+	if tablesName != "MetricsGauges" && tablesName != "MetricsCounters" {
+		return false, fmt.Errorf("invalid table name: %s", tablesName)
+	}
+	log.Printf("Checking if type exists in table %s: %s\n", tablesName, typeName)
+	var exists bool
+
+	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE Name = $1)", tablesName)
+
+	err := db.QueryRow(query, typeName).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("error checking type existence: %w", err)
+	}
+	log.Printf("Type exists: %t\n", exists)
+	return exists, nil
+}
+func (m *MemStorage) RecordingMetricsDB(db *sql.DB) error { // надо будет доделать
+	for nameType, value := range m.gauges {
+
+		exists, err := isTypeExists(db, nameType, "MetricsGauges")
+		if err != nil {
+			return err
+		}
+		if exists {
+			_, err := db.Exec("UPDATE MetricsGauges SET Value = $1 WHERE Name = $2", value, nameType)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err = db.Exec("INSERT INTO MetricsGauges (Name, Value) VALUES($1, $2)", nameType, value)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	for nameType, value := range m.counters {
+		exists, err := isTypeExists(db, nameType, "MetricsCounters")
+		if err != nil {
+			return err
+		}
+		if exists {
+			_, err := db.Exec("UPDATE MetricsCounters SET Value = $1 WHERE Name = $2", value, nameType)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err = db.Exec("INSERT INTO MetricsCounters (Name, Value) VALUES($1, $2)", nameType, value)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (m *MemStorage) RecordingMetricsFile(file *os.File) error {

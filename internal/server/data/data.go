@@ -56,7 +56,7 @@ func WritingToDisk(times int, fileStoragePath string, memStorage *storage.MemSto
 
 func ReadingFromDisk(fileStoragePath string, memStorage *storage.MemStorage) {
 	if fileStoragePath == "" {
-		log.Printf("fileStoragePath empty")
+		log.Println("fileStoragePath empty")
 		return
 	}
 	file, err := os.Open(fileStoragePath)
