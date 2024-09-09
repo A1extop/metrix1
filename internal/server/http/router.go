@@ -16,6 +16,8 @@ func NewRouter(handler *Handler, repos *psql.Repository) *gin.Engine {
 
 	router.POST("/value/", compress.CompressData(), logging.LoggingPost(log), handler.GetJSON)
 
+	router.POST("/updates/", compress.DeCompressData(), logging.LoggingPost(log), handler.UpdatePacketMetricsJSON)
+
 	router.GET("/", compress.CompressData(), logging.LoggingGet(log), handler.DerivationMetrics)
 	router.GET("/value/:type/:name", logging.LoggingGet(log), handler.DerivationMetric)
 

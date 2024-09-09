@@ -21,7 +21,63 @@ type Handler struct {
 func NewHandler(storage storage.MetricStorage) *Handler {
 	return &Handler{storage: storage}
 }
+func (h *Handler) UpdatePacketMetricsJSON(c *gin.Context) {
+	metrics, err := js.GetParametersMassiveJSON(c)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+	for _, metricsJs := range metrics {
+		var metricValue string
+		switch domain.MetricType(metricsJs.MType) {
 
+		case domain.Gauge:
+			if metricsJs.Value == nil {
+				c.String(http.StatusBadRequest, "missing value for gauge metric")
+				return
+			}
+			metricValue = fmt.Sprintf("%g", *metricsJs.Value)
+		case domain.Counter:
+			if metricsJs.Delta == nil {
+				c.String(http.StatusBadRequest, "missing value for counter metric")
+				return
+			}
+			metricValue = fmt.Sprintf("%d", *metricsJs.Delta)
+		default:
+			c.String(http.StatusBadRequest, "invalid metric type")
+			return
+		}
+		err = usecase.UpdateMetric(h.storage, metricsJs.MType, metricValue, metricsJs.ID) //
+		if err != nil {
+			c.String(http.StatusBadRequest, err.Error())
+			return
+		}
+
+		if domain.MetricType(metricsJs.MType) == domain.Counter {
+			valueInterface, err := h.storage.ServerSendMetric(metricsJs.ID, metricsJs.MType)
+			if err != nil {
+				c.Status(http.StatusNotFound)
+				return
+			}
+			if delta, ok := valueInterface.(int64); ok {
+				metricsJs.Delta = &delta
+			} else {
+				c.String(http.StatusBadRequest, "Invalid type for counter")
+				return
+			}
+		}
+		metric, err := json.Marshal(metricsJs)
+		if err != nil {
+			c.String(http.StatusBadRequest, err.Error())
+			return
+		}
+		c.Writer.Write(metric)
+	}
+	c.Header("Content-Type", "application/json")
+	currentTime := time.Now().Format(time.RFC1123)
+	c.Header("Date", currentTime)
+	c.Status(http.StatusOK)
+}
 func (h *Handler) Update(c *gin.Context) {
 	metricType := c.Param("type")
 	metricName := c.Param("name")
@@ -62,7 +118,7 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 	}
 	var metricValue string
 
-	switch domain.MetricType(metricsJs.MType) {
+	switch domain.MetricType(metricsJs.MType) { // надо перенести в domain
 
 	case domain.Gauge:
 		if metricsJs.Value == nil {

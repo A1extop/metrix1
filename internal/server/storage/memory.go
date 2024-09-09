@@ -47,20 +47,28 @@ func isTypeExists(db *sql.DB, typeName string, tablesName string) (bool, error) 
 	return exists, nil
 }
 func (m *MemStorage) RecordingMetricsDB(db *sql.DB) error { // надо будет доделать
+	tx, err := db.Begin()
+	if err != nil {
+		return nil
+	}
+
 	for nameType, value := range m.gauges {
 
 		exists, err := isTypeExists(db, nameType, "MetricsGauges")
 		if err != nil {
+			tx.Rollback()
 			return err
 		}
 		if exists {
 			_, err := db.Exec("UPDATE MetricsGauges SET Value = $1 WHERE Name = $2", value, nameType)
 			if err != nil {
+				tx.Rollback()
 				return err
 			}
 		} else {
 			_, err = db.Exec("INSERT INTO MetricsGauges (Name, Value) VALUES($1, $2)", nameType, value)
 			if err != nil {
+				tx.Rollback()
 				return err
 			}
 		}
@@ -73,14 +81,17 @@ func (m *MemStorage) RecordingMetricsDB(db *sql.DB) error { // надо буде
 		if exists {
 			_, err := db.Exec("UPDATE MetricsCounters SET Value = $1 WHERE Name = $2", value, nameType)
 			if err != nil {
+				tx.Rollback()
 				return err
 			}
 		} else {
 			_, err = db.Exec("INSERT INTO MetricsCounters (Name, Value) VALUES($1, $2)", nameType, value)
 			if err != nil {
+				tx.Rollback()
 				return err
 			}
 		}
+		return tx.Commit()
 	}
 	return nil
 }

@@ -28,7 +28,6 @@ func main() {
 	if db != nil {
 		psql.CreateOrConnectTable(db)
 		go psql.WritingToBD(repos, parameters.StoreInterval, parameters.AddrDB, newStorage)
-
 	}
 
 	router := http2.NewRouter(handler, repos)

@@ -10,16 +10,19 @@ import (
 	js "github.com/A1extop/metrix1/internal/agent/json"
 )
 
-func SendMetric(client *http.Client, serverAddress string, metrics *js.Metrics) error {
+func SendMetrics(client *http.Client, serverAddress string, metrics []js.Metrics) error {
 	metricsJs, err := json.Marshal(metrics)
+	fmt.Println(string(metricsJs))
 	if err != nil {
 		return fmt.Errorf("error marshalling metrics to JSON: %w", err)
 	}
+
 	compressedData, err := compress.CompressData(metricsJs)
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("%s/update/", serverAddress)
+
+	url := fmt.Sprintf("%s/updates/", serverAddress)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(compressedData))
 	if err != nil {
 		return fmt.Errorf("error creating request: %w", err)
@@ -32,6 +35,7 @@ func SendMetric(client *http.Client, serverAddress string, metrics *js.Metrics) 
 		return fmt.Errorf("error sending request: %w", err)
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("error response from server: %s", resp.Status)
 	}

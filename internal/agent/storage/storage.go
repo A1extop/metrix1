@@ -66,27 +66,31 @@ func (m *MemStorage) UpdateMetrics() {
 }
 
 func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
+	var metrics []js.Metrics
+
 	for name, value := range m.gauges {
 		metric := js.NewMetrics()
 		metric.ID = name
 		metric.Value = &value
-		metric.MType = "gauge" //
-		err := send.SendMetric(client, serverAddress, metric)
-		if err != nil {
-			log.Printf("Не удалось отправить метрику %s, тип - %s: %s", name, metric.MType, err.Error())
-
-		}
+		metric.MType = "gauge"
+		metrics = append(metrics, *metric)
 	}
+
 	for name, value := range m.counters {
 		metric := js.NewMetrics()
 		metric.ID = name
-		metric.MType = "counter" //
+		metric.MType = "counter"
 		metric.Delta = &value
-		err := send.SendMetric(client, serverAddress, metric)
+		metrics = append(metrics, *metric)
+	}
+
+	if len(metrics) > 0 {
+		err := send.SendMetrics(client, serverAddress, metrics)
 		if err != nil {
-			log.Printf("Не удалось отправить метрику %s, тип - %s: %s", name, metric.MType, err.Error())
+			log.Printf("Failed to send metrics: %s", err.Error())
 		}
 	}
+
 	m.counters["PollCount"] = 0
 }
 func NewMemStorage() *MemStorage {
