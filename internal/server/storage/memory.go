@@ -16,11 +16,14 @@ import (
 type MetricStorage interface {
 	UpdateGauge(name string, value float64)
 	UpdateCounter(name string, value int64)
+
 	GetGauge(name string) (float64, bool)
 	GetCounter(name string) (int64, bool)
+
 	ServerSendMetric(metricName string, metricType string) (interface{}, error)
 	ServerSendAllMetricsHTML(c *gin.Context)
 	ServerSendAllMetrics(*os.File) error
+
 	RecordingMetricsFile(*os.File) error
 	RecordingMetricsDB(db *sql.DB) error
 }

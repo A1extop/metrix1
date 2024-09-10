@@ -1,6 +1,11 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+
+	js "github.com/A1extop/metrix1/internal/server/json"
+	"github.com/gin-gonic/gin"
+)
 
 type MetricType string
 
@@ -39,6 +44,22 @@ func (m *Metric) ValidateValue() error {
 		}
 	case Counter:
 		if _, ok := m.Value.(int64); !ok {
+			return ErrInvalidMetricValue
+		}
+	default:
+		return ErrInvalidMetricType
+	}
+	return nil
+}
+func Validate(metricsJs *js.Metrics, c *gin.Context) error {
+	switch MetricType(metricsJs.MType) {
+
+	case Gauge:
+		if metricsJs.Value == nil {
+			return ErrInvalidMetricValue
+		}
+	case Counter:
+		if metricsJs.Delta == nil {
 			return ErrInvalidMetricValue
 		}
 	default:

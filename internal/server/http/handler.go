@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -28,25 +29,13 @@ func (h *Handler) UpdatePacketMetricsJSON(c *gin.Context) {
 		return
 	}
 	for _, metricsJs := range metrics {
-		var metricValue string
-		switch domain.MetricType(metricsJs.MType) {
-
-		case domain.Gauge:
-			if metricsJs.Value == nil {
-				c.String(http.StatusBadRequest, "missing value for gauge metric")
-				return
-			}
-			metricValue = fmt.Sprintf("%g", *metricsJs.Value)
-		case domain.Counter:
-			if metricsJs.Delta == nil {
-				c.String(http.StatusBadRequest, "missing value for counter metric")
-				return
-			}
-			metricValue = fmt.Sprintf("%d", *metricsJs.Delta)
-		default:
-			c.String(http.StatusBadRequest, "invalid metric type")
+		err := domain.Validate(&metricsJs, c)
+		if err != nil {
+			c.String(http.StatusBadRequest, err.Error())
+			log.Printf("error UpdateJSON: %v", err)
 			return
 		}
+		metricValue := GetValue(&metricsJs)
 		err = usecase.UpdateMetric(h.storage, metricsJs.MType, metricValue, metricsJs.ID) //
 		if err != nil {
 			c.String(http.StatusBadRequest, err.Error())
@@ -109,34 +98,32 @@ func (h *Handler) DerivationMetric(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, value)
 }
+func GetValue(metricsJs *js.Metrics) string {
+	var metricValue string
+	switch domain.MetricType(metricsJs.MType) {
 
+	case domain.Gauge:
+		metricValue = fmt.Sprintf("%g", *metricsJs.Value)
+	case domain.Counter:
+		metricValue = fmt.Sprintf("%d", *metricsJs.Delta)
+	default:
+		return ""
+	}
+	return metricValue
+}
 func (h *Handler) UpdateJSON(c *gin.Context) {
 	metricsJs, err := js.GetParametersJSON(c)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	var metricValue string
-
-	switch domain.MetricType(metricsJs.MType) { // надо перенести в domain
-
-	case domain.Gauge:
-		if metricsJs.Value == nil {
-			c.String(http.StatusBadRequest, "missing value for gauge metric")
-			return
-		}
-		metricValue = fmt.Sprintf("%g", *metricsJs.Value)
-	case domain.Counter:
-		if metricsJs.Delta == nil {
-			c.String(http.StatusBadRequest, "missing value for counter metric")
-			return
-		}
-		metricValue = fmt.Sprintf("%d", *metricsJs.Delta)
-	default:
-		c.String(http.StatusBadRequest, "invalid metric type")
+	err = domain.Validate(metricsJs, c)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		log.Printf("error UpdateJSON: %v", err)
 		return
 	}
-
+	metricValue := GetValue(metricsJs)
 	err = usecase.UpdateMetric(h.storage, metricsJs.MType, metricValue, metricsJs.ID) //
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
