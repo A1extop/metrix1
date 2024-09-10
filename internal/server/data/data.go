@@ -29,7 +29,7 @@ func (p *Producer) Close() error {
 func (p *Producer) WriteEvent(metricSt storage.MetricStorage) error {
 	p.file.Truncate(0)
 	p.file.Seek(0, 0)
-	err := metricSt.ServerSendAllMetrics(p.file)
+	err := metricSt.ServerSendAllMetricsToFile(p.file)
 	return err
 }
 
@@ -64,7 +64,7 @@ func ReadingFromDisk(fileStoragePath string, memStorage *storage.MemStorage) {
 		log.Println(err)
 		return
 	}
-	err = memStorage.RecordingMetricsFile(file)
+	err = memStorage.ReadingMetricsFile(file)
 	defer file.Close()
 	if err != nil {
 		log.Println(err)

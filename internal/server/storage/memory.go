@@ -22,12 +22,14 @@ type MetricStorage interface {
 
 	ServerSendMetric(metricName string, metricType string) (interface{}, error)
 	ServerSendAllMetricsHTML(c *gin.Context)
-	ServerSendAllMetrics(*os.File) error
-
-	RecordingMetricsFile(*os.File) error
-	RecordingMetricsDB(db *sql.DB) error
+	MetricRecorder
 }
 
+type MetricRecorder interface {
+	ServerSendAllMetricsToFile(*os.File) error
+	ReadingMetricsFile(*os.File) error
+	RecordingMetricsDB(db *sql.DB) error
+}
 type MemStorage struct {
 	gauges   map[string]float64
 	counters map[string]int64
@@ -99,7 +101,7 @@ func (m *MemStorage) RecordingMetricsDB(db *sql.DB) error { // надо буде
 	return nil
 }
 
-func (m *MemStorage) RecordingMetricsFile(file *os.File) error {
+func (m *MemStorage) ReadingMetricsFile(file *os.File) error {
 	var loadedGauges map[string]float64
 	var loadedCounters map[string]int64
 
@@ -152,7 +154,7 @@ func (m *MemStorage) ServerSendAllMetricsHTML(c *gin.Context) {
 		return
 	}
 }
-func (m *MemStorage) ServerSendAllMetrics(file *os.File) error {
+func (m *MemStorage) ServerSendAllMetricsToFile(file *os.File) error {
 	dataGauges, err := json.MarshalIndent(m.gauges, "", " ")
 	if err != nil {
 		return fmt.Errorf("error serializing data: %v", err)
