@@ -3,11 +3,13 @@ package storage
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/A1extop/metrix1/internal/server/domain"
 	"github.com/gin-gonic/gin"
@@ -69,24 +71,42 @@ func Record[T float64 | int64](db *sql.DB, nameType string, tpName string, value
 	}
 	return nil
 }
-func (m *MemStorage) RecordingMetricsDB(db *sql.DB) error { // надо будет доделать
+func (m *MemStorage) RecordingMetricsDB(db *sql.DB) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil
 	}
-
+	TimesDuration := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
+	targetError := errors.New("driver: bad connection")
 	for nameType, value := range m.gauges {
-		err := Record(db, nameType, "MetricsGauges", value)
-		if err != nil {
-			tx.Rollback()
-			return err
+		for _, times := range TimesDuration {
+			err := Record(db, nameType, "MetricsGauges", value)
+			if err == nil {
+				break
+			}
+			if errors.Is(err, targetError) {
+				log.Printf("recover: %v", targetError)
+				time.Sleep(times)
+			} else {
+				tx.Rollback()
+				return err
+			}
+
 		}
 	}
 	for nameType, value := range m.counters {
-		err := Record(db, nameType, "MetricsCounters", value)
-		if err != nil {
-			tx.Rollback()
-			return err
+		for _, times := range TimesDuration {
+			err := Record(db, nameType, "MetricsCounters", value)
+			if err == nil {
+				break
+			}
+			if errors.Is(err, targetError) {
+				log.Printf("recover: %v", targetError)
+				time.Sleep(times)
+			} else {
+				tx.Rollback()
+				return err
+			}
 		}
 		return tx.Commit()
 	}

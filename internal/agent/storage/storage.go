@@ -88,7 +88,7 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
 
 	if len(metrics) > 0 {
 		TimesDuration := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
-		targetError := errors.New("error sending request:")
+		targetError := errors.New("error sending request")
 		for _, times := range TimesDuration {
 
 			err := send.SendMetrics(client, serverAddress, metrics)
