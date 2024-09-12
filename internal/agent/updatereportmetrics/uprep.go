@@ -26,6 +26,7 @@ func (u *Updater) Action(parameters *config.Parameters) {
 		case <-pollTicker.C:
 			u.updater.UpdateMetrics()
 		case <-reportTicker.C:
+
 			u.updater.ReportMetrics(client, "http://"+parameters.AddressHTTP)
 		}
 	}

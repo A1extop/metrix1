@@ -1,10 +1,12 @@
 package storage
 
 import (
+	"errors"
 	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
+	"time"
 
 	send "github.com/A1extop/metrix1/internal/agent/agentsend"
 	js "github.com/A1extop/metrix1/internal/agent/json"
@@ -85,9 +87,21 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
 	}
 
 	if len(metrics) > 0 {
-		err := send.SendMetrics(client, serverAddress, metrics)
-		if err != nil {
-			log.Printf("Failed to send metrics: %s", err.Error())
+		TimesDuration := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
+		targetError := errors.New("error sending request:")
+		for _, times := range TimesDuration {
+
+			err := send.SendMetrics(client, serverAddress, metrics)
+			if err == nil {
+				break
+			}
+			if errors.Is(err, targetError) {
+				log.Printf("Error encountered: %s. Retrying in %v...", err.Error(), times)
+				time.Sleep(times)
+			} else {
+				log.Printf("Failed to send metrics: %s", err.Error())
+				break
+			}
 		}
 	}
 

@@ -39,7 +39,6 @@ func isTypeExists(db *sql.DB, typeName string, tablesName string) (bool, error) 
 	if tablesName != "MetricsGauges" && tablesName != "MetricsCounters" {
 		return false, fmt.Errorf("invalid table name: %s", tablesName)
 	}
-	log.Printf("Checking if type exists in table %s: %s\n", tablesName, typeName)
 	var exists bool
 
 	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE Name = $1)", tablesName)
@@ -48,8 +47,27 @@ func isTypeExists(db *sql.DB, typeName string, tablesName string) (bool, error) 
 	if err != nil {
 		return false, fmt.Errorf("error checking type existence: %w", err)
 	}
-	log.Printf("Type exists: %t\n", exists)
 	return exists, nil
+}
+func Record[T float64 | int64](db *sql.DB, nameType string, tpName string, value T) error {
+	exists, err := isTypeExists(db, nameType, tpName)
+	if err != nil {
+		return err
+	}
+	if exists {
+		command := fmt.Sprintf("UPDATE %s SET Value = $1 WHERE Name = $2", tpName)
+		_, err := db.Exec(command, value, nameType)
+		if err != nil {
+			return err
+		}
+	} else {
+		command := fmt.Sprintf("INSERT INTO %s (Name, Value) VALUES($1, $2)", tpName)
+		_, err = db.Exec(command, nameType, value)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 func (m *MemStorage) RecordingMetricsDB(db *sql.DB) error { // надо будет доделать
 	tx, err := db.Begin()
@@ -58,43 +76,17 @@ func (m *MemStorage) RecordingMetricsDB(db *sql.DB) error { // надо буде
 	}
 
 	for nameType, value := range m.gauges {
-
-		exists, err := isTypeExists(db, nameType, "MetricsGauges")
+		err := Record(db, nameType, "MetricsGauges", value)
 		if err != nil {
 			tx.Rollback()
 			return err
 		}
-		if exists {
-			_, err := db.Exec("UPDATE MetricsGauges SET Value = $1 WHERE Name = $2", value, nameType)
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
-		} else {
-			_, err = db.Exec("INSERT INTO MetricsGauges (Name, Value) VALUES($1, $2)", nameType, value)
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
-		}
 	}
 	for nameType, value := range m.counters {
-		exists, err := isTypeExists(db, nameType, "MetricsCounters")
+		err := Record(db, nameType, "MetricsCounters", value)
 		if err != nil {
+			tx.Rollback()
 			return err
-		}
-		if exists {
-			_, err := db.Exec("UPDATE MetricsCounters SET Value = $1 WHERE Name = $2", value, nameType)
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
-		} else {
-			_, err = db.Exec("INSERT INTO MetricsCounters (Name, Value) VALUES($1, $2)", nameType, value)
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
 		}
 		return tx.Commit()
 	}
