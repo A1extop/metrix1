@@ -16,7 +16,7 @@ type MetricUpdater interface {
 	updateRuntimeMetrics()
 	updateCustomMetrics()
 	UpdateMetrics()
-	ReportMetrics(client *http.Client, serverAddress string)
+	ReportMetrics(client *http.Client, serverAddress string, key string)
 }
 
 type MemStorage struct {
@@ -67,7 +67,7 @@ func (m *MemStorage) UpdateMetrics() {
 	m.updateCustomMetrics()
 }
 
-func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
+func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string, key string) {
 	var metrics []js.Metrics
 
 	for name, value := range m.gauges {
@@ -91,7 +91,7 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
 		targetError := errors.New("error sending request")
 		for _, times := range TimesDuration {
 
-			err := send.SendMetrics(client, serverAddress, metrics)
+			err := send.SendMetrics(client, serverAddress, metrics, key)
 			if err == nil {
 				break
 			}

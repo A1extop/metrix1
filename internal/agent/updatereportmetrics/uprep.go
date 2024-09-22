@@ -27,7 +27,7 @@ func (u *Updater) Action(parameters *config.Parameters) {
 			u.updater.UpdateMetrics()
 		case <-reportTicker.C:
 
-			u.updater.ReportMetrics(client, "http://"+parameters.AddressHTTP)
+			u.updater.ReportMetrics(client, "http://"+parameters.AddressHTTP, parameters.Key)
 		}
 	}
 }

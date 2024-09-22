@@ -13,6 +13,7 @@ type Parameters struct {
 	FileStoragePath string
 	Restore         bool
 	AddrDB          string
+	Key             string
 }
 
 func NewParameters() *Parameters {
@@ -21,6 +22,7 @@ func NewParameters() *Parameters {
 		StoreInterval:   0,
 		FileStoragePath: "",
 		Restore:         true,
+		Key:             "",
 	}
 }
 
@@ -30,12 +32,15 @@ func (p *Parameters) GetParameters() {
 	fileStoragePath := flag.String("f", "", "the path to the file where the current values are saved")
 	restore := flag.Bool("r", true, "whether or not to load previously saved values from the specified file when the server starts")
 	addrDB := flag.String("d", "", "String with database connection address")
+	key := flag.String("k", "", "hash key")
+
 	flag.Parse()
 	p.AddressHTTP = *addr
 	p.StoreInterval = *storeInterval
 	p.FileStoragePath = *fileStoragePath
 	p.Restore = *restore
 	p.AddrDB = *addrDB
+	p.Key = *key
 }
 func (p *Parameters) GetParametersEnvironmentVariables() {
 	addr := os.Getenv("ADDRESS")
@@ -67,5 +72,10 @@ func (p *Parameters) GetParametersEnvironmentVariables() {
 	addrDB := os.Getenv("DATABASE_DSN")
 	if addrDB != "" {
 		p.AddrDB = addrDB
+	}
+
+	key := os.Getenv("KEY")
+	if key != "" {
+		p.Key = key
 	}
 }
