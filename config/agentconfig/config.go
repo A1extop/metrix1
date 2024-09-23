@@ -10,6 +10,7 @@ type Parameters struct {
 	AddressHTTP    string
 	ReportInterval int
 	PollInterval   int
+	RateLimit      int
 }
 
 func NewParameters() *Parameters {
@@ -17,6 +18,7 @@ func NewParameters() *Parameters {
 		AddressHTTP:    "",
 		ReportInterval: 0,
 		PollInterval:   0,
+		RateLimit:      1,
 	}
 }
 
@@ -24,10 +26,12 @@ func (p *Parameters) GetParameters() {
 	addr := flag.String("a", "localhost:8080", "address HTTP")
 	reportInterval := flag.Int("r", 10, "frequency of sending metrics to the server in seconds")
 	pollInterval := flag.Int("p", 2, "frequency of polling metrics from the runtime package in seconds")
+	rateLimit := flag.Int("l", 1, "rateLimit")
 	flag.Parse()
 	p.AddressHTTP = *addr
 	p.PollInterval = *pollInterval
 	p.ReportInterval = *reportInterval
+	p.RateLimit = *rateLimit
 }
 func (p *Parameters) GetParametersEnvironmentVariables() {
 	addr := os.Getenv("ADDRESS")
@@ -44,5 +48,9 @@ func (p *Parameters) GetParametersEnvironmentVariables() {
 	if pollIntervalStr != "" {
 		p.PollInterval = pollIntervalInt
 	}
-
+	rateLimitStr := os.Getenv("RATE_LIMIT")
+	rateLimit, _ := strconv.Atoi(rateLimitStr)
+	if rateLimitStr != "" {
+		p.RateLimit = rateLimit
+	}
 }

@@ -17,17 +17,22 @@ type Updater struct {
 }
 
 func (u *Updater) Action(parameters *config.Parameters) {
-
+	semaphore := make(chan struct{}, parameters.RateLimit)
 	pollTicker := time.NewTicker(time.Duration(parameters.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(parameters.ReportInterval) * time.Second)
 	client := &http.Client{}
-	for {
-		select {
-		case <-pollTicker.C:
-			u.updater.UpdateMetrics()
-		case <-reportTicker.C:
-
-			u.updater.ReportMetrics(client, "http://"+parameters.AddressHTTP)
+	go func() {
+		for {
+			<-pollTicker.C
+			go u.updater.UpdateMetrics()
 		}
-	}
+	}()
+
+	go func() {
+		for {
+			semaphore <- struct{}{}
+			<-reportTicker.C
+			u.updater.ReportMetrics(semaphore, client, "http://"+parameters.AddressHTTP)
+		}
+	}()
 }
