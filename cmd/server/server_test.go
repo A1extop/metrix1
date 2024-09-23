@@ -62,7 +62,7 @@ func TestGetMetric(t *testing.T) {
 	memStorage := storage.NewMemStorage()
 	handler := http2.NewHandler(memStorage)
 
-	storageDB, err := psql.ConnectDB("") //заглушка
+	storageDB, err := psql.ConnectDB("")
 	if err != nil {
 		log.Printf("error connecting to database - %v", err)
 	}
@@ -75,7 +75,7 @@ func TestGetMetric(t *testing.T) {
 	tests := []struct {
 		metricType string
 		metricName string
-		expected   string //пока оставил,но так как нет указаний, что надо было делать с отдельными данными, я их вывожу в командной строке
+		expected   string
 		statusCode int
 	}{
 		{"gauge", "testGauge", "100.3434", http.StatusOK},
