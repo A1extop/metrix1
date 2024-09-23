@@ -1,6 +1,7 @@
 package updatereportmetrics
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -16,23 +17,32 @@ type Updater struct {
 	updater storage.MetricUpdater
 }
 
-func (u *Updater) Action(parameters *config.Parameters) {
+func (u *Updater) Action(ctx context.Context, parameters *config.Parameters) {
 	semaphore := make(chan struct{}, parameters.RateLimit)
 	pollTicker := time.NewTicker(time.Duration(parameters.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(parameters.ReportInterval) * time.Second)
 	client := &http.Client{}
+
 	go func() {
 		for {
-			<-pollTicker.C
-			go u.updater.UpdateMetrics()
+			select {
+			case <-ctx.Done():
+				return
+			case <-pollTicker.C:
+				go u.updater.UpdateMetrics()
+			}
 		}
 	}()
 
 	go func() {
 		for {
-			semaphore <- struct{}{}
-			<-reportTicker.C
-			u.updater.ReportMetrics(semaphore, client, "http://"+parameters.AddressHTTP)
+			select {
+			case <-ctx.Done():
+				return
+			case <-reportTicker.C:
+				semaphore <- struct{}{}
+				u.updater.ReportMetrics(semaphore, client, "http://"+parameters.AddressHTTP, parameters.Key)
+			}
 		}
 	}()
 }
