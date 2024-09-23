@@ -25,7 +25,7 @@ func TestUpdateMetric(t *testing.T) {
 	}
 	store := psql.NewStore(storageDB)
 	repos := psql.NewRepository(store)
-	router := http2.NewRouter(handler, repos)
+	router := http2.NewRouter(handler, repos, "key")
 
 	tests := []struct {
 		metricType  string
@@ -68,7 +68,7 @@ func TestGetMetric(t *testing.T) {
 	}
 	store := psql.NewStore(storageDB)
 	repos := psql.NewRepository(store)
-	router := http2.NewRouter(handler, repos)
+	router := http2.NewRouter(handler, repos, "key")
 
 	memStorage.UpdateGauge("testGauge", 100.3434)
 
