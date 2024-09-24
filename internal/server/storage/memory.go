@@ -206,58 +206,24 @@ func (m *MemStorage) ServerSendAllMetricsHTML(c *gin.Context) {
 	}
 }
 func (m *MemStorage) ServerSendAllMetricsToFile(file *os.File) error {
-	var wg sync.WaitGroup
-	errCh := make(chan error, 2)
-
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		m.mv.RLock()
-		defer m.mv.RUnlock()
-		dataGauges, err := json.MarshalIndent(m.gauges, "", " ")
-		if err != nil {
-			errCh <- fmt.Errorf("error serializing gauges: %v", err)
-			return
-		}
-		if _, err := file.Write(dataGauges); err != nil {
-			errCh <- fmt.Errorf("error writing gauges to file: %v", err)
-			return
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		m.mv.RLock()
-		defer m.mv.RUnlock()
-		dataCounters, err := json.MarshalIndent(m.counters, "", " ")
-		if err != nil {
-			errCh <- fmt.Errorf("error serializing counters: %v", err)
-			return
-		}
-		if _, err := file.Write(dataCounters); err != nil {
-			errCh <- fmt.Errorf("error writing counters to file: %v", err)
-			return
-		}
-	}()
-
-	wg.Wait()
-	close(errCh)
-
-	var errStr string
-	for err := range errCh {
-		if err != nil {
-			errStr += err.Error() + "\n"
-		}
+	dataGauges, err := json.MarshalIndent(m.gauges, "", " ")
+	if err != nil {
+		return fmt.Errorf("error serializing data: %v", err)
 	}
-
-	if errStr != "" {
-		return fmt.Errorf("one or more errors occurred: \n%s", errStr)
+	dataCounters, err := json.MarshalIndent(m.counters, "", " ")
+	if err != nil {
+		return fmt.Errorf("error serializing data: %v", err)
 	}
-
-	log.Println("Metrics successfully written to file")
+	if _, err := file.Write(dataGauges); err != nil {
+		return fmt.Errorf("error writing to file: %v", err)
+	}
+	if _, err := file.Write(dataCounters); err != nil {
+		return fmt.Errorf("error writing to file: %v", err)
+	}
+	log.Println("Metrics successfully written to file ")
 	return nil
 }
+
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
 		mv:       sync.RWMutex{},
