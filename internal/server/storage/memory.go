@@ -170,8 +170,10 @@ func (m *MemStorage) ReadingMetricsFile(file *os.File) error {
 	if err := decoder.Decode(&loadedCounters); err != nil {
 		return fmt.Errorf("error deserializing counters: %v", err)
 	}
+	m.mv.Lock()
 	m.gauges = loadedGauges
 	m.counters = loadedCounters
+	m.mv.Unlock()
 	log.Println("Metrics successfully restored from file")
 	return nil
 }
