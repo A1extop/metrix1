@@ -21,7 +21,7 @@ func (u *Updater) Action(ctx context.Context, parameters *config.Parameters) {
 	pollTicker := time.NewTicker(time.Duration(parameters.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(parameters.ReportInterval) * time.Second)
 	client := &http.Client{}
-
+	semaphore := make(chan struct{}, parameters.RateLimit)
 	go func() {
 		for {
 			select {
@@ -39,6 +39,10 @@ func (u *Updater) Action(ctx context.Context, parameters *config.Parameters) {
 			case <-ctx.Done():
 				return
 			case <-reportTicker.C:
+				semaphore <- struct{}{}
+				defer func() {
+					<-semaphore
+				}()
 				u.updater.ReportMetrics(client, "http://"+parameters.AddressHTTP, parameters.Key)
 			}
 		}
