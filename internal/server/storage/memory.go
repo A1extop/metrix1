@@ -170,10 +170,8 @@ func (m *MemStorage) ReadingMetricsFile(file *os.File) error {
 	if err := decoder.Decode(&loadedCounters); err != nil {
 		return fmt.Errorf("error deserializing counters: %v", err)
 	}
-	m.mv.Lock()
 	m.gauges = loadedGauges
 	m.counters = loadedCounters
-	m.mv.Unlock()
 	log.Println("Metrics successfully restored from file")
 	return nil
 }
@@ -206,49 +204,21 @@ func (m *MemStorage) ServerSendAllMetricsHTML(c *gin.Context) {
 	}
 }
 func (m *MemStorage) ServerSendAllMetricsToFile(file *os.File) error {
-	var wg sync.WaitGroup
-	errCh := make(chan error, 2)
-
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		m.mv.RLock()
-		defer m.mv.RUnlock()
-		dataGauges, err := json.MarshalIndent(m.gauges, "", " ")
-		if err != nil {
-			errCh <- fmt.Errorf("error serializing data: %v", err)
-			return
-		}
-		if _, err := file.Write(dataGauges); err != nil {
-			errCh <- fmt.Errorf("error writing to file: %v", err)
-			return
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		m.mv.RLock()
-		defer m.mv.RUnlock()
-		dataCounters, err := json.MarshalIndent(m.counters, "", " ")
-		if err != nil {
-			errCh <- fmt.Errorf("error serializing data: %v", err)
-			return
-		}
-		if _, err := file.Write(dataCounters); err != nil {
-			errCh <- fmt.Errorf("error writing to file: %v", err)
-			return
-		}
-	}()
-
-	wg.Wait()
-	close(errCh)
-
-	if err, ok := <-errCh; ok {
-		return err
+	dataGauges, err := json.MarshalIndent(m.gauges, "", " ")
+	if err != nil {
+		return fmt.Errorf("error serializing data: %v", err)
 	}
-
-	log.Println("Metrics successfully written to file")
+	dataCounters, err := json.MarshalIndent(m.counters, "", " ")
+	if err != nil {
+		return fmt.Errorf("error serializing data: %v", err)
+	}
+	if _, err := file.Write(dataGauges); err != nil {
+		return fmt.Errorf("error writing to file: %v", err)
+	}
+	if _, err := file.Write(dataCounters); err != nil {
+		return fmt.Errorf("error writing to file: %v", err)
+	}
+	log.Println("Metrics successfully written to file ")
 	return nil
 }
 
