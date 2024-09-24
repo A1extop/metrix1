@@ -6,20 +6,26 @@ import (
 	"math/rand"
 	"net/http"
 	"runtime"
+	"sync"
 	"time"
+
+	"fmt"
 
 	send "github.com/A1extop/metrix1/internal/agent/agentsend"
 	js "github.com/A1extop/metrix1/internal/agent/json"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
 )
 
 type MetricUpdater interface {
 	updateRuntimeMetrics()
 	updateCustomMetrics()
 	UpdateMetrics()
-	ReportMetrics(client *http.Client, serverAddress string, key string)
+	ReportMetrics(semaphore chan struct{}, client *http.Client, serverAddress string, key string)
 }
 
 type MemStorage struct {
+	mv       sync.RWMutex
 	gauges   map[string]float64
 	counters map[string]int64
 }
@@ -27,7 +33,10 @@ type MemStorage struct {
 func (m *MemStorage) updateRuntimeMetrics() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-
+	v, _ := mem.VirtualMemory()
+	cpuUsages, _ := cpu.Percent(0, true)
+	m.mv.Lock()
+	defer m.mv.Unlock()
 	m.gauges["Alloc"] = float64(memStats.Alloc)
 	m.gauges["BuckHashSys"] = float64(memStats.BuckHashSys)
 	m.gauges["Frees"] = float64(memStats.Frees)
@@ -55,9 +64,16 @@ func (m *MemStorage) updateRuntimeMetrics() {
 	m.gauges["StackSys"] = float64(memStats.StackSys)
 	m.gauges["Sys"] = float64(memStats.Sys)
 	m.gauges["TotalAlloc"] = float64(memStats.TotalAlloc)
+	m.gauges["TotalMemory"] = float64(v.Total)
+	m.gauges["FreeMemory"] = float64(v.Free)
+	for i, usage := range cpuUsages {
+		m.gauges[fmt.Sprintf("CPUutilization%d", i+1)] = usage
+	}
 }
 
 func (m *MemStorage) updateCustomMetrics() {
+	m.mv.Lock()
+	defer m.mv.Unlock()
 	m.counters["PollCount"]++
 	m.gauges["RandomValue"] = rand.Float64()
 }
@@ -67,25 +83,48 @@ func (m *MemStorage) UpdateMetrics() {
 	m.updateCustomMetrics()
 }
 
-func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string, key string) {
+func (m *MemStorage) ReportMetrics(semaphore chan struct{}, client *http.Client, serverAddress string, key string) {
+	defer func() {
+		<-semaphore
+	}()
+	var wg sync.WaitGroup
+	var metricsCh = make(chan js.Metrics, len(m.gauges)+len(m.counters))
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		m.mv.RLock()
+		defer m.mv.RLock()
+		for name, value := range m.gauges {
+			metric := js.NewMetrics()
+			metric.ID = name
+			metric.Value = &value
+			metric.MType = "gauge"
+			metricsCh <- *metric
+		}
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		m.mv.RLock()
+		defer m.mv.RLock()
+		for name, value := range m.counters {
+			metric := js.NewMetrics()
+			metric.ID = name
+			metric.MType = "counter"
+			metric.Delta = &value
+			metricsCh <- *metric
+		}
+	}()
+
+	go func() {
+		wg.Wait()
+		close(metricsCh)
+	}()
 	var metrics []js.Metrics
-
-	for name, value := range m.gauges {
-		metric := js.NewMetrics()
-		metric.ID = name
-		metric.Value = &value
-		metric.MType = "gauge"
-		metrics = append(metrics, *metric)
+	for metric := range metricsCh {
+		metrics = append(metrics, metric)
 	}
-
-	for name, value := range m.counters {
-		metric := js.NewMetrics()
-		metric.ID = name
-		metric.MType = "counter"
-		metric.Delta = &value
-		metrics = append(metrics, *metric)
-	}
-
 	if len(metrics) > 0 {
 		TimesDuration := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
 		targetError := errors.New("error sending request")
@@ -109,6 +148,7 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string, ke
 }
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
+		mv:       sync.RWMutex{},
 		gauges:   make(map[string]float64),
 		counters: make(map[string]int64),
 	}
