@@ -2,14 +2,13 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
 	"sync"
 	"time"
-
-	"fmt"
 
 	send "github.com/A1extop/metrix1/internal/agent/agentsend"
 	js "github.com/A1extop/metrix1/internal/agent/json"
@@ -72,8 +71,6 @@ func (m *MemStorage) updateRuntimeMetrics() {
 }
 
 func (m *MemStorage) updateCustomMetrics() {
-	m.mv.Lock()
-	defer m.mv.Unlock()
 	m.counters["PollCount"]++
 	m.gauges["RandomValue"] = rand.Float64()
 }
@@ -84,44 +81,24 @@ func (m *MemStorage) UpdateMetrics() {
 }
 
 func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string, key string) {
-	var wg sync.WaitGroup
-	var metricsCh = make(chan js.Metrics, len(m.gauges)+len(m.counters))
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		m.mv.RLock()
-		defer m.mv.RLock()
-		for name, value := range m.gauges {
-			metric := js.NewMetrics()
-			metric.ID = name
-			metric.Value = &value
-			metric.MType = "gauge"
-			metricsCh <- *metric
-		}
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		m.mv.RLock()
-		defer m.mv.RLock()
-		for name, value := range m.counters {
-			metric := js.NewMetrics()
-			metric.ID = name
-			metric.MType = "counter"
-			metric.Delta = &value
-			metricsCh <- *metric
-		}
-	}()
-
-	go func() {
-		wg.Wait()
-		close(metricsCh)
-	}()
 	var metrics []js.Metrics
-	for metric := range metricsCh {
-		metrics = append(metrics, metric)
+
+	for name, value := range m.gauges {
+		metric := js.NewMetrics()
+		metric.ID = name
+		metric.Value = &value
+		metric.MType = "gauge"
+		metrics = append(metrics, *metric)
 	}
+
+	for name, value := range m.counters {
+		metric := js.NewMetrics()
+		metric.ID = name
+		metric.MType = "counter"
+		metric.Delta = &value
+		metrics = append(metrics, *metric)
+	}
+
 	if len(metrics) > 0 {
 		TimesDuration := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
 		targetError := errors.New("error sending request")
