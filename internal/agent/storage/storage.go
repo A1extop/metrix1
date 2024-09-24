@@ -94,7 +94,7 @@ func (m *MemStorage) ReportMetrics(semaphore chan struct{}, client *http.Client,
 	go func() {
 		defer wg.Done()
 		m.mv.RLock()
-		defer m.mv.RLock()
+		defer m.mv.RUnlock()
 		for name, value := range m.gauges {
 			metric := js.NewMetrics()
 			metric.ID = name
@@ -107,7 +107,7 @@ func (m *MemStorage) ReportMetrics(semaphore chan struct{}, client *http.Client,
 	go func() {
 		defer wg.Done()
 		m.mv.RLock()
-		defer m.mv.RLock()
+		defer m.mv.RUnlock()
 		for name, value := range m.counters {
 			metric := js.NewMetrics()
 			metric.ID = name
