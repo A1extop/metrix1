@@ -20,7 +20,7 @@ type MetricUpdater interface {
 	updateRuntimeMetrics()
 	updateCustomMetrics()
 	UpdateMetrics()
-	ReportMetrics(semaphore chan struct{}, client *http.Client, serverAddress string, key string)
+	ReportMetrics(client *http.Client, serverAddress string, key string)
 }
 
 type MemStorage struct {
@@ -81,10 +81,7 @@ func (m *MemStorage) UpdateMetrics() {
 	m.updateCustomMetrics()
 }
 
-func (m *MemStorage) ReportMetrics(semaphore chan struct{}, client *http.Client, serverAddress string, key string) {
-	defer func() {
-		<-semaphore
-	}()
+func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string, key string) {
 	var metrics []js.Metrics
 
 	for name, value := range m.gauges {
