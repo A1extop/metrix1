@@ -20,7 +20,7 @@ type MetricUpdater interface {
 	updateRuntimeMetrics()
 	updateCustomMetrics()
 	UpdateMetrics()
-	ReportMetrics(client *http.Client, serverAddress string, key string)
+	ReportMetrics(semaphore chan struct{}, client *http.Client, serverAddress string, key string)
 }
 
 type MemStorage struct {
@@ -71,16 +71,20 @@ func (m *MemStorage) updateRuntimeMetrics() {
 }
 
 func (m *MemStorage) updateCustomMetrics() {
+	m.mv.Lock()
+	defer m.mv.Unlock()
 	m.counters["PollCount"]++
 	m.gauges["RandomValue"] = rand.Float64()
 }
-
 func (m *MemStorage) UpdateMetrics() {
 	m.updateRuntimeMetrics()
 	m.updateCustomMetrics()
 }
 
-func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string, key string) {
+func (m *MemStorage) ReportMetrics(semaphore chan struct{}, client *http.Client, serverAddress string, key string) {
+	defer func() {
+		<-semaphore
+	}()
 	var metrics []js.Metrics
 
 	for name, value := range m.gauges {

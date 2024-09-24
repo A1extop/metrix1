@@ -18,6 +18,7 @@ type Updater struct {
 }
 
 func (u *Updater) Action(ctx context.Context, parameters *config.Parameters) {
+	semaphore := make(chan struct{}, parameters.RateLimit)
 	pollTicker := time.NewTicker(time.Duration(parameters.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(parameters.ReportInterval) * time.Second)
 	client := &http.Client{}
@@ -38,7 +39,8 @@ func (u *Updater) Action(ctx context.Context, parameters *config.Parameters) {
 			case <-ctx.Done():
 				return
 			case <-reportTicker.C:
-				u.updater.ReportMetrics(client, "http://"+parameters.AddressHTTP, parameters.Key)
+				semaphore <- struct{}{}
+				u.updater.ReportMetrics(semaphore, client, "http://"+parameters.AddressHTTP, parameters.Key)
 			}
 		}
 	}()
