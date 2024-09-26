@@ -2,11 +2,10 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
-
-	"fmt"
 
 	"github.com/A1extop/metrix1/internal/server/domain"
 	js "github.com/A1extop/metrix1/internal/server/json"
