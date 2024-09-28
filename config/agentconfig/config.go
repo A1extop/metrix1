@@ -20,7 +20,7 @@ func NewParameters() *Parameters {
 		ReportInterval: 0,
 		PollInterval:   0,
 		Key:            "",
-		RateLimit:      1,
+		RateLimit:      0,
 	}
 }
 

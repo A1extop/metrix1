@@ -10,8 +10,7 @@ import (
 
 func main() {
 	storage := storage.NewMemStorage()
-	ch := make(chan struct{})
-	action := uprep.NewAction(storage, ch)
+	action := uprep.NewAction(storage)
 	parameters := config.NewParameters()
 	parameters.GetParameters()
 	parameters.GetParametersEnvironmentVariables()
