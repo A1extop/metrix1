@@ -1,6 +1,7 @@
 package updatereportmetrics
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -16,18 +17,32 @@ type Updater struct {
 	updater storage.MetricUpdater
 }
 
-func (u *Updater) Action(parameters *config.Parameters) {
-
+func (u *Updater) Action(ctx context.Context, parameters *config.Parameters) {
 	pollTicker := time.NewTicker(time.Duration(parameters.PollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(parameters.ReportInterval) * time.Second)
 	client := &http.Client{}
-	for {
-		select {
-		case <-pollTicker.C:
-			u.updater.UpdateMetrics()
-		case <-reportTicker.C:
-
-			u.updater.ReportMetrics(client, "http://"+parameters.AddressHTTP)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-pollTicker.C:
+				go u.updater.UpdateMetrics()
+			}
 		}
+	}()
+	if parameters.RateLimit == 0 {
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-reportTicker.C:
+					u.updater.ReportMetrics(client, "http://"+parameters.AddressHTTP, parameters.Key)
+				}
+			}
+		}()
+	} else if parameters.RateLimit > 0 {
+		u.updater.Report(ctx, client, parameters.AddressHTTP, parameters.Key, parameters.RateLimit, reportTicker)
 	}
 }
