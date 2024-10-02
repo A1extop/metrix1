@@ -42,7 +42,7 @@ func (h *Handler) UpdatePacketMetricsJSON(c *gin.Context) {
 		}
 
 		if domain.MetricType(metricsJs.MType) == domain.Counter {
-			valueInterface, err := h.storage.ServerSendMetric(metricsJs.ID, metricsJs.MType)
+			valueInterface, err := h.storage.ServerFindMetric(metricsJs.ID, metricsJs.MType)
 			if err != nil {
 				c.Status(http.StatusNotFound)
 				return
@@ -90,7 +90,7 @@ func (h *Handler) DerivationMetrics(c *gin.Context) {
 func (h *Handler) DerivationMetric(c *gin.Context) {
 	metricType := c.Param("type")
 	metricName := c.Param("name")
-	value, err := h.storage.ServerSendMetric(metricName, metricType)
+	value, err := h.storage.ServerFindMetric(metricName, metricType)
 	if err != nil {
 		c.Status(http.StatusNotFound)
 		return
@@ -130,7 +130,7 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 	}
 
 	if domain.MetricType(metricsJs.MType) == domain.Counter {
-		valueInterface, err := h.storage.ServerSendMetric(metricsJs.ID, metricsJs.MType)
+		valueInterface, err := h.storage.ServerFindMetric(metricsJs.ID, metricsJs.MType)
 		if err != nil {
 			c.Status(http.StatusNotFound)
 			return
@@ -161,7 +161,7 @@ func (h *Handler) GetJSON(c *gin.Context) {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	valueInterface, err := h.storage.ServerSendMetric(metrics.ID, metrics.MType)
+	valueInterface, err := h.storage.ServerFindMetric(metrics.ID, metrics.MType)
 	if err != nil {
 		c.Status(http.StatusNotFound)
 		return
@@ -192,7 +192,4 @@ func (h *Handler) GetJSON(c *gin.Context) {
 	currentTime := time.Now().Format(time.RFC1123)
 	c.Header("Date", currentTime)
 	c.Status(http.StatusOK)
-}
-func (h *Handler) CheckConnect() {
-
 }

@@ -23,7 +23,7 @@ type MetricStorage interface {
 	GetGauge(name string) (float64, bool)
 	GetCounter(name string) (int64, bool)
 
-	ServerSendMetric(metricName string, metricType string) (interface{}, error)
+	ServerFindMetric(metricName string, metricType string) (interface{}, error)
 	ServerSendAllMetricsHTML(c *gin.Context)
 	MetricRecorder
 }
@@ -177,7 +177,7 @@ func (m *MemStorage) ReadingMetricsFile(file *os.File) error {
 	log.Println("Metrics successfully restored from file")
 	return nil
 }
-func (m *MemStorage) ServerSendMetric(metricName string, metricType string) (interface{}, error) {
+func (m *MemStorage) ServerFindMetric(metricName string, metricType string) (interface{}, error) {
 	switch domain.MetricType(metricType) {
 	case domain.Gauge:
 		if value, ok := m.gauges[metricName]; ok {

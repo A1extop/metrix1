@@ -21,7 +21,6 @@ func NewRouter(handler *Handler, repos *psql.Repository, key string) *gin.Engine
 
 	router.GET("/", hash.WorkingWithHash(key), compress.CompressData(), logging.LoggingGet(log), handler.DerivationMetrics)
 	router.GET("/value/:type/:name", hash.WorkingWithHash(key), logging.LoggingGet(log), handler.DerivationMetric)
-
 	router.GET("/ping", hash.WorkingWithHash(key), logging.LoggingGet(log), repos.Ping)
 	return router
 }
