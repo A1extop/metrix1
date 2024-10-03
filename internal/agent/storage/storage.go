@@ -2,31 +2,68 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
+	"sync"
 	"time"
+
+	"context"
 
 	send "github.com/A1extop/metrix1/internal/agent/agentsend"
 	js "github.com/A1extop/metrix1/internal/agent/json"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
 )
 
 type MetricUpdater interface {
 	updateRuntimeMetrics()
 	updateCustomMetrics()
 	UpdateMetrics()
-	ReportMetrics(client *http.Client, serverAddress string)
+	ReportMetrics(client *http.Client, serverAddress string, key string)
+	updateGopsutilMetrics()
+	Report(ctx context.Context, client *http.Client, serverAddress string, key string, rateLimit int, reportTicker *time.Ticker)
 }
 
 type MemStorage struct {
+	mv       sync.RWMutex
 	gauges   map[string]float64
 	counters map[string]int64
 }
 
+func workerPool(ctx context.Context, rateLimit int, jobs <-chan js.Metrics, client *http.Client, serverAddress string, key string) {
+	var wg sync.WaitGroup
+	for i := 0; i < rateLimit; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case metric, ok := <-jobs:
+					if !ok {
+						return
+					}
+					err := send.SendMetric(client, serverAddress, metric, key)
+					if err != nil {
+						log.Printf("error sending metric: %v\n", err)
+					}
+				}
+			}
+		}()
+	}
+	wg.Wait()
+}
 func (m *MemStorage) updateRuntimeMetrics() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
+	v, _ := mem.VirtualMemory()
+	cpuUsages, _ := cpu.Percent(0, true)
+	m.mv.Lock()
+	defer m.mv.Unlock()
 
 	m.gauges["Alloc"] = float64(memStats.Alloc)
 	m.gauges["BuckHashSys"] = float64(memStats.BuckHashSys)
@@ -55,19 +92,37 @@ func (m *MemStorage) updateRuntimeMetrics() {
 	m.gauges["StackSys"] = float64(memStats.StackSys)
 	m.gauges["Sys"] = float64(memStats.Sys)
 	m.gauges["TotalAlloc"] = float64(memStats.TotalAlloc)
+	m.gauges["TotalMemory"] = float64(v.Total)
+	m.gauges["FreeMemory"] = float64(v.Free)
+	for i, usage := range cpuUsages {
+		m.gauges[fmt.Sprintf("CPUutilization%d", i+1)] = usage
+	}
+
+}
+func (m *MemStorage) updateGopsutilMetrics() {
+	m.mv.Lock()
+	defer m.mv.Unlock()
+	v, _ := mem.VirtualMemory()
+	cpuUsages, _ := cpu.Percent(0, true)
+	m.gauges["TotalMemory"] = float64(v.Total)
+	m.gauges["FreeMemory"] = float64(v.Free)
+	for i, usage := range cpuUsages {
+		m.gauges[fmt.Sprintf("CPUutilization%d", i+1)] = usage
+	}
 }
 
 func (m *MemStorage) updateCustomMetrics() {
+	m.mv.Lock()
+	defer m.mv.Unlock()
 	m.counters["PollCount"]++
 	m.gauges["RandomValue"] = rand.Float64()
 }
-
 func (m *MemStorage) UpdateMetrics() {
 	m.updateRuntimeMetrics()
 	m.updateCustomMetrics()
 }
 
-func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
+func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string, key string) {
 	var metrics []js.Metrics
 
 	for name, value := range m.gauges {
@@ -91,7 +146,7 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
 		targetError := errors.New("error sending request")
 		for _, times := range TimesDuration {
 
-			err := send.SendMetrics(client, serverAddress, metrics)
+			err := send.SendMetrics(client, serverAddress, metrics, key)
 			if err == nil {
 				break
 			}
@@ -107,8 +162,44 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string) {
 
 	m.counters["PollCount"] = 0
 }
+
+func (m *MemStorage) Report(ctx context.Context, client *http.Client, serverAddress string, key string, rateLimit int, reportTicker *time.Ticker) {
+	metricsChan := make(chan js.Metrics, rateLimit)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		workerPool(ctx, rateLimit, metricsChan, client, "http://"+serverAddress, key)
+	}()
+
+	for {
+		select {
+		case <-ctx.Done():
+			close(metricsChan)
+			wg.Wait()
+			return
+		case <-reportTicker.C:
+			for name, value := range m.gauges {
+				metricsChan <- js.Metrics{
+					ID:    name,
+					MType: "gauge",
+					Value: &value,
+				}
+			}
+			for name, value := range m.counters {
+				metricsChan <- js.Metrics{
+					ID:    name,
+					MType: "counter",
+					Delta: &value,
+				}
+			}
+		}
+	}
+}
+
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
+		mv:       sync.RWMutex{},
 		gauges:   make(map[string]float64),
 		counters: make(map[string]int64),
 	}
