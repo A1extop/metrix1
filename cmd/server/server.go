@@ -9,6 +9,7 @@ import (
 	http2 "github.com/A1extop/metrix1/internal/server/http"
 	"github.com/A1extop/metrix1/internal/server/storage"
 	psql "github.com/A1extop/metrix1/internal/server/store/postgrestore"
+	_ "net/http/pprof"
 )
 
 func main() {
@@ -38,6 +39,7 @@ func main() {
 	go data.WritingToDisk(parameters.StoreInterval, parameters.FileStoragePath, newStorage)
 
 	log.Printf("Starting server on port %s", parameters.AddressHTTP)
+
 	err = http.ListenAndServe(parameters.AddressHTTP, router)
 	if err != nil {
 		log.Fatal(err)

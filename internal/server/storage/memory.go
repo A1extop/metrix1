@@ -178,6 +178,8 @@ func (m *MemStorage) ReadingMetricsFile(file *os.File) error {
 	return nil
 }
 func (m *MemStorage) ServerFindMetric(metricName string, metricType string) (interface{}, error) {
+	m.mv.RLock()
+	defer m.mv.RUnlock()
 	switch domain.MetricType(metricType) {
 	case domain.Gauge:
 		if value, ok := m.gauges[metricName]; ok {
