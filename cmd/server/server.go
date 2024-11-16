@@ -5,11 +5,13 @@ import (
 	"net/http"
 
 	config "github.com/A1extop/metrix1/config/serverconfig"
+
+	_ "net/http/pprof"
+
 	"github.com/A1extop/metrix1/internal/server/data"
 	http2 "github.com/A1extop/metrix1/internal/server/http"
 	"github.com/A1extop/metrix1/internal/server/storage"
 	psql "github.com/A1extop/metrix1/internal/server/store/postgrestore"
-	_ "net/http/pprof"
 )
 
 func main() {

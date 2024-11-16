@@ -5,14 +5,16 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"net/http/httptest"
 	"os"
 
-	js "github.com/A1extop/metrix1/internal/server/json"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/mock"
+
 	"testing"
+
+	js "github.com/A1extop/metrix1/internal/server/json"
 )
 
 type MockStorage struct {
