@@ -21,6 +21,7 @@ type Handler struct {
 func NewHandler(storage storage.MetricStorage) *Handler {
 	return &Handler{storage: storage}
 }
+
 func (h *Handler) UpdatePacketMetricsJSON(c *gin.Context) {
 	metrics, err := js.GetParametersMassiveJSON(c)
 	if err != nil {
@@ -87,6 +88,7 @@ func (h *Handler) DerivationMetrics(c *gin.Context) {
 	h.storage.ServerSendAllMetricsHTML(c)
 	c.Status(http.StatusOK)
 }
+
 func (h *Handler) DerivationMetric(c *gin.Context) {
 	metricType := c.Param("type")
 	metricName := c.Param("name")
@@ -97,6 +99,7 @@ func (h *Handler) DerivationMetric(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, value)
 }
+
 func GetValue(metricsJs *js.Metrics) string {
 	var metricValue string
 	switch domain.MetricType(metricsJs.MType) {
