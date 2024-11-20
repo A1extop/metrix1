@@ -6,7 +6,6 @@ import (
 )
 
 func TestGetParametersEnvironmentVariables(t *testing.T) {
-	// Устанавливаем переменные окружения
 	os.Setenv("ADDRESS", "localhost:9090")
 	os.Setenv("KEY", "key")
 	os.Setenv("POLL_INTERVAL", "400")
