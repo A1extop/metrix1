@@ -3,6 +3,7 @@ module github.com/A1extop/metrix1
 go 1.22.6
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/shirou/gopsutil v3.21.11+incompatible

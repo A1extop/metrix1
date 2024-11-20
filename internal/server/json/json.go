@@ -16,6 +16,7 @@ type Metrics struct {
 func NewMetrics() *Metrics {
 	return &Metrics{}
 }
+
 func GetParametersMassiveJSON(c *gin.Context) ([]Metrics, error) {
 	var metrics []Metrics
 	if err := json.NewDecoder(c.Request.Body).Decode(&metrics); err != nil {
@@ -23,6 +24,7 @@ func GetParametersMassiveJSON(c *gin.Context) ([]Metrics, error) {
 	}
 	return metrics, nil
 }
+
 func GetParametersJSON(c *gin.Context) (*Metrics, error) {
 	metric := NewMetrics()
 	if err := json.NewDecoder(c.Request.Body).Decode(metric); err != nil {

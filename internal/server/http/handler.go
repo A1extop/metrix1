@@ -22,7 +22,11 @@ func NewHandler(storage storage.MetricStorage) *Handler {
 	return &Handler{storage: storage}
 }
 
+// UpdatePacketMetricsJSON processes an HTTP request to update metrics
+// accepted in JSON format. The function gets an array of metrics from the request body,
+// validates each metric and updates their values in the repository.
 func (h *Handler) UpdatePacketMetricsJSON(c *gin.Context) {
+	c.Header("Content-Type", "application/json")
 	metrics, err := js.GetParametersMassiveJSON(c)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
@@ -62,11 +66,13 @@ func (h *Handler) UpdatePacketMetricsJSON(c *gin.Context) {
 		}
 		c.Writer.Write(metric)
 	}
-	c.Header("Content-Type", "application/json")
+
 	currentTime := time.Now().Format(time.RFC1123)
 	c.Header("Date", currentTime)
 	c.Status(http.StatusOK)
 }
+
+// Update processes an HTTP request to update the metric according to the specified parameters.
 func (h *Handler) Update(c *gin.Context) {
 	metricType := c.Param("type")
 	metricName := c.Param("name")
@@ -84,11 +90,16 @@ func (h *Handler) Update(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+// DerivationMetrics output metrics outputs all metrics in
+// HTML format.
 func (h *Handler) DerivationMetrics(c *gin.Context) {
 	h.storage.ServerSendAllMetricsHTML(c)
 	c.Status(http.StatusOK)
 }
 
+// DerivationMetric processes the request to get a specific metric.
+// It takes the metric type and the metric name from the query parameters,
+// and then extracts the metric from storage and returns it in JSON format.
 func (h *Handler) DerivationMetric(c *gin.Context) {
 	metricType := c.Param("type")
 	metricName := c.Param("name")
@@ -113,6 +124,9 @@ func GetValue(metricsJs *js.Metrics) string {
 	}
 	return metricValue
 }
+
+// UpdateJSON handles updating
+// metrics in JSON format.
 func (h *Handler) UpdateJSON(c *gin.Context) {
 	metricsJs, err := js.GetParametersJSON(c)
 	if err != nil {
@@ -158,6 +172,8 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+// GetJSON processes a request to get
+// metrics in JSON format.
 func (h *Handler) GetJSON(c *gin.Context) {
 	metrics, err := js.GetParametersJSON(c)
 	if err != nil {

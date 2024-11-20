@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// WorkingWithHash performs work with hash.
 func WorkingWithHash(key string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		headerValue := c.GetHeader("HashSHA256")
@@ -22,12 +23,14 @@ func WorkingWithHash(key string) gin.HandlerFunc {
 		receivedHash, err := hex.DecodeString(headerValue)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid hash format"})
+			c.Abort()
 			return
 		}
 
 		body, err := io.ReadAll(c.Request.Body)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to read request body"})
+			c.Abort()
 			return
 		}
 
@@ -39,6 +42,7 @@ func WorkingWithHash(key string) gin.HandlerFunc {
 
 		if !hmac.Equal(receivedHash, expectedHash) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid hash"})
+			c.Abort()
 			return
 		}
 
