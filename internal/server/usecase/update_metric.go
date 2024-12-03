@@ -8,6 +8,7 @@ import (
 	"github.com/A1extop/metrix1/internal/server/storage"
 )
 
+// UpdateMetric updates the metric in the repository based on the data provided.
 func UpdateMetric(storage storage.MetricStorage, metricType, metricValue, metricName string) error {
 	var value interface{}
 	var err error

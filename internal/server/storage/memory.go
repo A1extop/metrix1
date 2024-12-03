@@ -35,8 +35,8 @@ type MetricRecorder interface {
 }
 type MemStorage struct {
 	mv       sync.RWMutex
-	gauges   map[string]float64
-	counters map[string]int64
+	Gauges   map[string]float64
+	Counters map[string]int64
 }
 
 func isTypeExists(db *sql.DB, typeName string, tablesName string) (bool, error) {
@@ -53,6 +53,8 @@ func isTypeExists(db *sql.DB, typeName string, tablesName string) (bool, error) 
 	}
 	return exists, nil
 }
+
+// Record writes the metric value to the database.
 func Record[T float64 | int64](db *sql.DB, nameType string, tpName string, value T) error {
 	exists, err := isTypeExists(db, nameType, tpName)
 	if err != nil {
@@ -73,6 +75,8 @@ func Record[T float64 | int64](db *sql.DB, nameType string, tpName string, value
 	}
 	return nil
 }
+
+// RecordingMetricsDB writes metrics to the database as part of a transaction.
 func (m *MemStorage) RecordingMetricsDB(db *sql.DB) (err error) { //возможно здесь будет ошибка
 	var wg sync.WaitGroup
 	tx, err := db.Begin()
@@ -126,7 +130,7 @@ func (m *MemStorage) RecordingMetricsDB(db *sql.DB) (err error) { //возмож
 		defer wg.Done()
 		m.mv.RLock()
 		defer m.mv.RUnlock()
-		for nameType, value := range m.gauges {
+		for nameType, value := range m.Gauges {
 			recordGauge(nameType, value)
 			if err != nil {
 				return
@@ -138,7 +142,7 @@ func (m *MemStorage) RecordingMetricsDB(db *sql.DB) (err error) { //возмож
 		defer wg.Done()
 		m.mv.RLock()
 		defer m.mv.RUnlock()
-		for nameType, value := range m.counters {
+		for nameType, value := range m.Counters {
 			recordCounter(nameType, value)
 			if err != nil {
 				return
@@ -150,6 +154,7 @@ func (m *MemStorage) RecordingMetricsDB(db *sql.DB) (err error) { //возмож
 	return err
 }
 
+// ReadingMetricsFile reads metrics from a file.
 func (m *MemStorage) ReadingMetricsFile(file *os.File) error {
 	var loadedGauges map[string]float64
 	var loadedCounters map[string]int64
@@ -171,20 +176,24 @@ func (m *MemStorage) ReadingMetricsFile(file *os.File) error {
 		return fmt.Errorf("error deserializing counters: %v", err)
 	}
 	m.mv.Lock()
-	m.gauges = loadedGauges
-	m.counters = loadedCounters
+	m.Gauges = loadedGauges
+	m.Counters = loadedCounters
 	m.mv.Unlock()
 	log.Println("Metrics successfully restored from file")
 	return nil
 }
+
+// ServerFindMetric searches for a metric by name and type in MemStorage.
 func (m *MemStorage) ServerFindMetric(metricName string, metricType string) (interface{}, error) {
+	m.mv.RLock()
+	defer m.mv.RUnlock()
 	switch domain.MetricType(metricType) {
 	case domain.Gauge:
-		if value, ok := m.gauges[metricName]; ok {
+		if value, ok := m.Gauges[metricName]; ok {
 			return value, nil
 		}
 	case domain.Counter:
-		if value, ok := m.counters[metricName]; ok {
+		if value, ok := m.Counters[metricName]; ok {
 			return value, nil
 		}
 	}
@@ -205,12 +214,14 @@ func (m *MemStorage) ServerSendAllMetricsHTML(c *gin.Context) {
 		return
 	}
 }
+
+// ServerSendAllMetricsToFile serializes all metrics from MemStorage and writes them to the specified file.
 func (m *MemStorage) ServerSendAllMetricsToFile(file *os.File) error {
-	dataGauges, err := json.MarshalIndent(m.gauges, "", " ")
+	dataGauges, err := json.MarshalIndent(m.Gauges, "", " ")
 	if err != nil {
 		return fmt.Errorf("error serializing data: %v", err)
 	}
-	dataCounters, err := json.MarshalIndent(m.counters, "", " ")
+	dataCounters, err := json.MarshalIndent(m.Counters, "", " ")
 	if err != nil {
 		return fmt.Errorf("error serializing data: %v", err)
 	}
@@ -227,33 +238,37 @@ func (m *MemStorage) ServerSendAllMetricsToFile(file *os.File) error {
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
 		mv:       sync.RWMutex{},
-		gauges:   make(map[string]float64),
-		counters: make(map[string]int64),
+		Gauges:   make(map[string]float64),
+		Counters: make(map[string]int64),
 	}
 }
 
+// UpdateGauge update metric by name.
 func (m *MemStorage) UpdateGauge(name string, value float64) {
 	m.mv.Lock()
 	defer m.mv.Unlock()
-	m.gauges[name] = value
+	m.Gauges[name] = value
 }
 
+// UpdateCounter update metric by name.
 func (m *MemStorage) UpdateCounter(name string, value int64) {
 	m.mv.Lock()
 	defer m.mv.Unlock()
-	m.counters[name] += value
+	m.Counters[name] += value
 }
 
+// GetGauge getting a metric by name.
 func (m *MemStorage) GetGauge(name string) (float64, bool) {
 	m.mv.RLock()
 	defer m.mv.RUnlock()
-	value, exists := m.gauges[name]
+	value, exists := m.Gauges[name]
 	return value, exists
 }
 
+// GetCounter getting a metric by name.
 func (m *MemStorage) GetCounter(name string) (int64, bool) {
 	m.mv.RLock()
 	defer m.mv.RUnlock()
-	value, exists := m.counters[name]
+	value, exists := m.Counters[name]
 	return value, exists
 }

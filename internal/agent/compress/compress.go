@@ -6,6 +6,7 @@ import (
 	"fmt"
 )
 
+// CompressData accepts an array of bytes and returns its compressed version using gzip.
 func CompressData(data []byte) ([]byte, error) {
 	var compressedData bytes.Buffer
 	gzipWriter := gzip.NewWriter(&compressedData)
