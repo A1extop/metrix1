@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -14,7 +15,22 @@ import (
 	psql "github.com/A1extop/metrix1/internal/server/store/postgrestore"
 )
 
+var (
+	BuildVersion string
+	BuildDate    string
+	BuildCommit  string
+)
+
 func main() {
+	if BuildVersion == "" {
+		BuildVersion = "N/A"
+	}
+	if BuildDate == "" {
+		BuildDate = "N/A"
+	}
+	if BuildCommit == "" {
+		BuildCommit = "N/A"
+	}
 	newStorage := storage.NewMemStorage()
 	handler := http2.NewHandler(newStorage)
 
@@ -41,9 +57,12 @@ func main() {
 	go data.WritingToDisk(parameters.StoreInterval, parameters.FileStoragePath, newStorage)
 
 	log.Printf("Starting server on port %s", parameters.AddressHTTP)
-
+	fmt.Printf("Build version: %s\n", BuildVersion)
+	fmt.Printf("Build date: %s\n", BuildDate)
+	fmt.Printf("Build commit: %s\n", BuildCommit)
 	err = http.ListenAndServe(parameters.AddressHTTP, router)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 }

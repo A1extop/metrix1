@@ -27,9 +27,15 @@ func (p *Producer) Close() error {
 }
 
 func (p *Producer) WriteEvent(metricSt storage.MetricStorage) error {
-	p.file.Truncate(0)
-	p.file.Seek(0, 0)
-	err := metricSt.ServerSendAllMetricsToFile(p.file)
+	err := p.file.Truncate(0)
+	if err != nil {
+		return err
+	}
+	_, err = p.file.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+	err = metricSt.ServerSendAllMetricsToFile(p.file)
 	return err
 }
 

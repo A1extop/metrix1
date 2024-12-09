@@ -1,3 +1,5 @@
+// Package main provides an analyzer. Launched using this command from the metrix1 directory: go run cmd/mymultichecker/staticlint/main.go ./...
+
 package main
 
 import (
@@ -30,6 +32,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/unusedresult"
 )
 
+// resultErrors function examines the type of the result of a function call, represented by *ast.CallExpr, and determines that the result is an error. It takes two arguments.
 func resultErrors(pass *analysis.Pass, call *ast.CallExpr) []bool {
 	switch t := pass.TypesInfo.Types[call].Type.(type) {
 	case *types.Named:
@@ -51,6 +54,7 @@ func resultErrors(pass *analysis.Pass, call *ast.CallExpr) []bool {
 	return []bool{false}
 }
 
+// isReturnError checks whether the function called in the call expression returns at least one error in its result.
 func isReturnError(pass *analysis.Pass, call *ast.CallExpr) bool {
 	for _, isError := range resultErrors(pass, call) {
 		if isError {
@@ -66,8 +70,6 @@ var errorType = types.
 	Underlying().(*types.Interface)
 
 func isErrorType(t types.Type) bool {
-	// проверяем, что t реализует интерфейс, при помощи которого определен тип error,
-	// т.е. для типа t определен метод Error() string
 	return types.Implements(t, errorType)
 }
 
@@ -80,12 +82,14 @@ type Pass struct {
 	TypesInfo    *types.Info
 }
 
+// ErrCheckAnalyzer is an analyzer that checks for unaccounted errors in the code.
 var ErrCheckAnalyzer = &analysis.Analyzer{
 	Name: "errcheck",
 	Doc:  "check for unchecked errors",
 	Run:  run,
 }
 
+// SuspiciousComparisonAnalyzer is an analyzer that looks for suspicious comparisons.
 var SuspiciousComparisonAnalyzer = &analysis.Analyzer{
 	Name: "suscomp",
 	Doc:  "detect suspicious comparisons like x == x",
@@ -107,6 +111,7 @@ var SuspiciousComparisonAnalyzer = &analysis.Analyzer{
 	},
 }
 
+// InfiniteLoopAnalyzer is an analyzer that checks for potential infinite loops.
 var InfiniteLoopAnalyzer = &analysis.Analyzer{
 	Name: "infinite",
 	Doc:  "check for potential infinite loops",
@@ -125,6 +130,7 @@ var InfiniteLoopAnalyzer = &analysis.Analyzer{
 	},
 }
 
+// OsExitAnalyzer is an analyzer that checks for direct calls to os.Exit in a package's main function.
 var OsExitAnalyzer = &analysis.Analyzer{
 	Name: "osexitanalysis",
 	Doc:  "check for direct os.Exit calls in the main function of the main package",
@@ -157,6 +163,7 @@ func runOsExitAnalysis(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 
+// run — основная функция, которая обрабатывает файл и выполняет проверку.
 func run(pass *analysis.Pass) (interface{}, error) {
 	expr := func(x *ast.ExprStmt) {
 		if call, ok := x.X.(*ast.CallExpr); ok {
