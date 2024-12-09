@@ -33,7 +33,7 @@ func (h *Handler) UpdatePacketMetricsJSON(c *gin.Context) {
 		return
 	}
 	for _, metricsJs := range metrics {
-		err := domain.Validate(&metricsJs, c)
+		err = domain.Validate(&metricsJs, c)
 		if err != nil {
 			c.String(http.StatusBadRequest, err.Error())
 			log.Printf("error UpdateJSON: %v", err)
@@ -64,7 +64,11 @@ func (h *Handler) UpdatePacketMetricsJSON(c *gin.Context) {
 			c.String(http.StatusBadRequest, err.Error())
 			return
 		}
-		c.Writer.Write(metric)
+		_, err = c.Writer.Write(metric)
+		if err != nil {
+			c.String(http.StatusBadRequest, err.Error())
+			return
+		}
 	}
 
 	currentTime := time.Now().Format(time.RFC1123)
@@ -147,7 +151,8 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 	}
 
 	if domain.MetricType(metricsJs.MType) == domain.Counter {
-		valueInterface, err := h.storage.ServerFindMetric(metricsJs.ID, metricsJs.MType)
+		var valueInterface interface{}
+		valueInterface, err = h.storage.ServerFindMetric(metricsJs.ID, metricsJs.MType)
 		if err != nil {
 			c.Status(http.StatusNotFound)
 			return
@@ -166,7 +171,11 @@ func (h *Handler) UpdateJSON(c *gin.Context) {
 		return
 	}
 	c.Header("Content-Type", "application/json")
-	c.Writer.Write(metric)
+	_, err = c.Writer.Write(metric)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
 	currentTime := time.Now().Format(time.RFC1123)
 	c.Header("Date", currentTime)
 	c.Status(http.StatusOK)
@@ -207,7 +216,11 @@ func (h *Handler) GetJSON(c *gin.Context) {
 		return
 	}
 	c.Header("Content-Type", "application/json")
-	c.Writer.Write(metricJs)
+	_, err = c.Writer.Write(metricJs)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
 	currentTime := time.Now().Format(time.RFC1123)
 	c.Header("Date", currentTime)
 	c.Status(http.StatusOK)

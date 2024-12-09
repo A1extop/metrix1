@@ -97,6 +97,9 @@ func CompressData() gin.HandlerFunc {
 
 		c.Next()
 
-		gzw.zw.Close()
+		err := gzw.zw.Close()
+		if err != nil {
+			return
+		}
 	}
 }
