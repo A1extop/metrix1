@@ -44,12 +44,18 @@ func (p *Parameters) GetParametersEnvironmentVariables() {
 		p.AddressHTTP = addr
 	}
 	repIntervalStr := os.Getenv("REPORT_INTERVAL")
-	repIntervalInt, _ := strconv.Atoi(repIntervalStr)
+	repIntervalInt, err := strconv.Atoi(repIntervalStr)
+	if err == nil {
+		p.ReportInterval = 10
+	}
 	if repIntervalStr != "" {
 		p.ReportInterval = repIntervalInt
 	}
 	pollIntervalStr := os.Getenv("POLL_INTERVAL")
-	pollIntervalInt, _ := strconv.Atoi(pollIntervalStr)
+	pollIntervalInt, err := strconv.Atoi(pollIntervalStr)
+	if err == nil {
+		p.PollInterval = 2
+	}
 	if pollIntervalStr != "" {
 		p.PollInterval = pollIntervalInt
 	}
@@ -59,7 +65,11 @@ func (p *Parameters) GetParametersEnvironmentVariables() {
 		p.Key = key
 	}
 	rateLimitStr := os.Getenv("RATE_LIMIT")
-	rateLimit, _ := strconv.Atoi(rateLimitStr)
+	rateLimit, err := strconv.Atoi(rateLimitStr)
+	if err != nil {
+		p.RateLimit = 1
+	}
+
 	if pollIntervalStr != "" {
 		p.RateLimit = rateLimit
 	}

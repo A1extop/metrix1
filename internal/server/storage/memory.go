@@ -62,7 +62,7 @@ func Record[T float64 | int64](db *sql.DB, nameType string, tpName string, value
 	}
 	if exists {
 		command := fmt.Sprintf("UPDATE %s SET Value = $1 WHERE Name = $2", tpName)
-		_, err := db.Exec(command, value, nameType)
+		_, err = db.Exec(command, value, nameType)
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ func Record[T float64 | int64](db *sql.DB, nameType string, tpName string, value
 }
 
 // RecordingMetricsDB writes metrics to the database as part of a transaction.
-func (m *MemStorage) RecordingMetricsDB(db *sql.DB) (err error) { //возможно здесь будет ошибка
+func (m *MemStorage) RecordingMetricsDB(db *sql.DB) error { //возможно здесь будет ошибка
 	var wg sync.WaitGroup
 	tx, err := db.Begin()
 	if err != nil {
@@ -86,7 +86,7 @@ func (m *MemStorage) RecordingMetricsDB(db *sql.DB) (err error) { //возмож
 
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			err = tx.Rollback()
 		} else {
 			err = tx.Commit()
 		}
@@ -97,7 +97,7 @@ func (m *MemStorage) RecordingMetricsDB(db *sql.DB) (err error) { //возмож
 
 	recordGauge := func(nameType string, value float64) {
 		for _, times := range TimesDuration {
-			err := Record(db, nameType, "MetricsGauges", value)
+			err = Record(db, nameType, "MetricsGauges", value)
 			if err == nil {
 				break
 			}
@@ -112,7 +112,7 @@ func (m *MemStorage) RecordingMetricsDB(db *sql.DB) (err error) { //возмож
 
 	recordCounter := func(nameType string, value int64) {
 		for _, times := range TimesDuration {
-			err := Record(db, nameType, "MetricsCounters", value)
+			err = Record(db, nameType, "MetricsCounters", value)
 			if err == nil {
 				break
 			}

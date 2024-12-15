@@ -37,7 +37,10 @@ func WorkingWithHash(key string) gin.HandlerFunc {
 		c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
 		h := hmac.New(sha256.New, []byte(key))
-		h.Write(body)
+		_, err = h.Write(body)
+		if err != nil {
+			return
+		}
 		expectedHash := h.Sum(nil)
 
 		if !hmac.Equal(receivedHash, expectedHash) {

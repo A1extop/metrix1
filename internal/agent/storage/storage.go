@@ -60,8 +60,14 @@ func workerPool(ctx context.Context, rateLimit int, jobs <-chan js.Metrics, clie
 func (m *MemStorage) updateRuntimeMetrics() {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	v, _ := mem.VirtualMemory()
-	cpuUsages, _ := cpu.Percent(0, true)
+	v, err := mem.VirtualMemory()
+	if err != nil {
+		return
+	}
+	cpuUsages, err := cpu.Percent(0, true)
+	if err != nil {
+		return
+	}
 	m.mv.Lock()
 	defer m.mv.Unlock()
 
@@ -102,8 +108,14 @@ func (m *MemStorage) updateRuntimeMetrics() {
 func (m *MemStorage) updateGopsutilMetrics() {
 	m.mv.Lock()
 	defer m.mv.Unlock()
-	v, _ := mem.VirtualMemory()
-	cpuUsages, _ := cpu.Percent(0, true)
+	v, err := mem.VirtualMemory()
+	if err != nil {
+		return
+	}
+	cpuUsages, err := cpu.Percent(0, true)
+	if err != nil {
+		return
+	}
 	m.gauges["TotalMemory"] = float64(v.Total)
 	m.gauges["FreeMemory"] = float64(v.Free)
 	for i, usage := range cpuUsages {
