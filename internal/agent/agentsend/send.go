@@ -18,6 +18,13 @@ func send(client *http.Client, serverAddress, path string, data []byte, key stri
 	if err != nil {
 		return err
 	}
+	url := fmt.Sprintf("%s%s", serverAddress, path)
+	hs, err := hash.SignRequestWithSHA256(compressedData, key)
+
+	if err != nil {
+		return fmt.Errorf("error creating hash: %w", err)
+	}
+
 	encryptionData := make([]byte, 0)
 	if encryptionKey != "" {
 		encryptionData, err = hash.Encrypt(compressedData, encryptionKey)
@@ -25,13 +32,9 @@ func send(client *http.Client, serverAddress, path string, data []byte, key stri
 			return err
 		}
 	}
-
-	hs, err := hash.SignRequestWithSHA256(compressedData, key)
-	if err != nil {
-		return fmt.Errorf("error creating hash: %w", err)
+	if len(encryptionData) == 0 {
+		encryptionData = compressedData
 	}
-
-	url := fmt.Sprintf("%s%s", serverAddress, path)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(encryptionData))
 	if err != nil {
 		return fmt.Errorf("error creating request: %w", err)
