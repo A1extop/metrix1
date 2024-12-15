@@ -16,7 +16,7 @@ func NewRouter(handler *Handler, repos *psql.Repository, parameters *serverconfi
 	router.POST("/update/:type/:name/:value", hash.WorkingWithDecryption(parameters.CryptoKey), hash.WorkingWithHash(parameters.Key), logging.LoggingPost(log), handler.Update)
 	router.POST("/update/", hash.WorkingWithDecryption(parameters.CryptoKey), hash.WorkingWithHash(parameters.Key), compress.DeCompressData(), logging.LoggingPost(log), handler.UpdateJSON)
 
-	router.POST("/value/", hash.WorkingWithDecryption(parameters.CryptoKey), hash.WorkingWithHash(parameters.Key), compress.CompressData(), logging.LoggingPost(log), handler.GetJSON)
+	router.POST("/value/", hash.WorkingWithHash(parameters.Key), compress.CompressData(), logging.LoggingPost(log), handler.GetJSON)
 
 	router.POST("/updates/", hash.WorkingWithDecryption(parameters.CryptoKey), hash.WorkingWithHash(parameters.Key), compress.DeCompressData(), logging.LoggingPost(log), handler.UpdatePacketMetricsJSON)
 
