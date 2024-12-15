@@ -49,7 +49,7 @@ func main() {
 		go psql.WritingToBD(repos, parameters.StoreInterval, parameters.AddrDB, newStorage)
 	}
 
-	router := http2.NewRouter(handler, repos, parameters.Key)
+	router := http2.NewRouter(handler, repos, parameters)
 
 	if parameters.Restore {
 		data.ReadingFromDisk(parameters.FileStoragePath, newStorage)
