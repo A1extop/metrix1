@@ -48,7 +48,7 @@ func main() {
 
 	db, err := psql.ConnectDB(parameters.AddrDB)
 	if err != nil {
-		log.Println("Failed to connect to database at startup:", err)
+		log.Println("failed to connect to database at startup:", err)
 	}
 	store := psql.NewStore(db)
 	repos := psql.NewRepository(store)
@@ -75,7 +75,7 @@ func main() {
 	}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to listen on %s: %v\n", parameters.AddressHTTP, err)
+			log.Fatalf("failed to listen on %s: %v\n", parameters.AddressHTTP, err)
 		}
 	}()
 	<-ctx.Done()
