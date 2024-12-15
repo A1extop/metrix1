@@ -3,6 +3,7 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"github.com/A1extop/metrix1/config/agentconfig"
 	"log"
 	"math/rand"
 	"net/http"
@@ -22,9 +23,9 @@ type MetricUpdater interface {
 	updateRuntimeMetrics()
 	updateCustomMetrics()
 	UpdateMetrics()
-	ReportMetrics(client *http.Client, serverAddress string, key string)
+	ReportMetrics(client *http.Client, parameters *agentconfig.Parameters)
 	updateGopsutilMetrics()
-	Report(ctx context.Context, client *http.Client, serverAddress string, key string, rateLimit int, reportTicker *time.Ticker)
+	Report(ctx context.Context, client *http.Client, parameters *agentconfig.Parameters, reportTicker *time.Ticker)
 }
 
 type MemStorage struct {
@@ -33,7 +34,7 @@ type MemStorage struct {
 	counters map[string]int64
 }
 
-func workerPool(ctx context.Context, rateLimit int, jobs <-chan js.Metrics, client *http.Client, serverAddress string, key string) {
+func workerPool(ctx context.Context, rateLimit int, jobs <-chan js.Metrics, client *http.Client, parameters *agentconfig.Parameters) {
 	var wg sync.WaitGroup
 	for i := 0; i < rateLimit; i++ {
 		wg.Add(1)
@@ -47,7 +48,7 @@ func workerPool(ctx context.Context, rateLimit int, jobs <-chan js.Metrics, clie
 					if !ok {
 						return
 					}
-					err := send.SendMetric(client, serverAddress, metric, key)
+					err := send.SendMetric(client, metric, parameters)
 					if err != nil {
 						log.Printf("error sending metric: %v\n", err)
 					}
@@ -134,7 +135,7 @@ func (m *MemStorage) UpdateMetrics() {
 	m.updateCustomMetrics()
 }
 
-func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string, key string) {
+func (m *MemStorage) ReportMetrics(client *http.Client, parameters *agentconfig.Parameters) {
 	var metrics []js.Metrics
 
 	for name, value := range m.gauges {
@@ -158,7 +159,7 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string, ke
 		targetError := errors.New("error sending request")
 		for _, times := range TimesDuration {
 
-			err := send.SendMetrics(client, serverAddress, metrics, key)
+			err := send.SendMetrics(client, metrics, parameters)
 			if err == nil {
 				break
 			}
@@ -175,13 +176,15 @@ func (m *MemStorage) ReportMetrics(client *http.Client, serverAddress string, ke
 	m.counters["PollCount"] = 0
 }
 
-func (m *MemStorage) Report(ctx context.Context, client *http.Client, serverAddress string, key string, rateLimit int, reportTicker *time.Ticker) {
-	metricsChan := make(chan js.Metrics, rateLimit)
+// serverAddress string, key string, rateLimit int
+func (m *MemStorage) Report(ctx context.Context, client *http.Client, parameters *agentconfig.Parameters, reportTicker *time.Ticker) {
+	metricsChan := make(chan js.Metrics, parameters.RateLimit)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		workerPool(ctx, rateLimit, metricsChan, client, "http://"+serverAddress, key)
+		parameters.AddressHTTP = "http://" + parameters.AddressHTTP
+		workerPool(ctx, parameters.RateLimit, metricsChan, client, parameters)
 	}()
 
 	for {
