@@ -13,15 +13,15 @@ func NewRouter(handler *Handler, repos *psql.Repository, parameters *serverconfi
 	router := gin.New()
 	log := logging.New()
 
-	router.POST("/update/:type/:name/:value", hash.WorkingWithDecryption(parameters.CryptoKey), hash.WorkingWithHash(parameters.Key), logging.LoggingPost(log), handler.Update)
+	router.POST("/update/:type/:name/:value", hash.WorkingWithHash(parameters.Key), logging.LoggingPost(log), handler.Update)
 	router.POST("/update/", hash.WorkingWithHash(parameters.Key), compress.DeCompressData(), logging.LoggingPost(log), handler.UpdateJSON)
 
 	router.POST("/value/", hash.WorkingWithHash(parameters.Key), compress.CompressData(), logging.LoggingPost(log), handler.GetJSON)
 
-	router.POST("/updates/", hash.WorkingWithDecryption(parameters.CryptoKey), hash.WorkingWithHash(parameters.Key), compress.DeCompressData(), logging.LoggingPost(log), handler.UpdatePacketMetricsJSON)
+	router.POST("/updates/", hash.WorkingWithHash(parameters.Key), compress.DeCompressData(), logging.LoggingPost(log), handler.UpdatePacketMetricsJSON)
 
-	router.GET("/", hash.WorkingWithDecryption(parameters.CryptoKey), hash.WorkingWithHash(parameters.Key), compress.CompressData(), logging.LoggingGet(log), handler.DerivationMetrics)
-	router.GET("/value/:type/:name", hash.WorkingWithDecryption(parameters.CryptoKey), hash.WorkingWithHash(parameters.Key), logging.LoggingGet(log), handler.DerivationMetric)
-	router.GET("/ping", hash.WorkingWithDecryption(parameters.CryptoKey), hash.WorkingWithHash(parameters.Key), logging.LoggingGet(log), repos.Ping)
+	router.GET("/", hash.WorkingWithHash(parameters.Key), compress.CompressData(), logging.LoggingGet(log), handler.DerivationMetrics)
+	router.GET("/value/:type/:name", hash.WorkingWithHash(parameters.Key), logging.LoggingGet(log), handler.DerivationMetric)
+	router.GET("/ping", hash.WorkingWithHash(parameters.Key), logging.LoggingGet(log), repos.Ping)
 	return router
 }
