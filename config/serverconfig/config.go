@@ -35,7 +35,7 @@ func (p *Parameters) GetParameters() {
 	restore := flag.Bool("r", true, "whether or not to load previously saved values from the specified file when the server starts")
 	addrDB := flag.String("d", "", "String with database connection address")
 	key := flag.String("k", "", "hash key")
-	cryptoKey := flag.String("c", "", "hash encryption key")
+	cryptoKey := flag.String("c", "", "encryption key")
 
 	flag.Parse()
 	p.AddressHTTP = *addr

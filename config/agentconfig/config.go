@@ -32,7 +32,7 @@ func (p *Parameters) GetParameters() {
 	pollInterval := flag.Int("p", 2, "frequency of polling metrics from the runtime package in seconds")
 	key := flag.String("k", "", "hash key")
 	rateLimit := flag.Int("l", 1, "number of goroutines")
-	cryptoKey := flag.String("c", "", "hash key")
+	cryptoKey := flag.String("c", "", "encrypt key")
 
 	flag.Parse()
 	p.AddressHTTP = *addr
