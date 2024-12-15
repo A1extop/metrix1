@@ -398,3 +398,39 @@ package validator // import "github.com/A1extop/metrix1/pkg/validator"
 FUNCTIONS
 
 func ValidateRequest(c *gin.Context, expectedContentType, metricName string) bool
+
+## Пакет github.com/A1extop/metrix1/cmd/mymultichecker/staticlint
+package main // import "github.com/A1extop/metrix1/cmd/mymultichecker/staticlint"
+
+Package main provides an analyzer. Launched using this command from the metrix1 directory: go run cmd/mymultichecker/statilint/main.go ./...
+
+FUNCTIONS
+
+func resultErrors(pass *analysis.Pass, call *ast.CallExpr) []bool
+	resultErrors function examines the type of the result of a function call, represented by *ast.CallExpr, and determines that the result is an error. It takes two arguments.
+
+func isReturnError(pass *analysis.Pass, call *ast.CallExpr) bool
+	isReturnError checks whether the function called in the call expression returns at least one error in its result.
+
+func runOsExitAnalysis(pass *analysis.Pass) (interface{}, error)
+
+func run(pass *analysis.Pass) (interface{}, error)
+	run — основная функция, которая обрабатывает файл и выполняет проверку.
+
+TYPES
+
+type Pass struct {
+	Fset         *token.FileSet
+	Files        []*ast.File
+	OtherFiles   []string
+	IgnoredFiles []string
+	Pkg          *types.Package
+	TypesInfo    *types.Info
+}
+
+var ErrCheckAnalyzer = &analysis.Analyzer{
+	Name: "errcheck",
+	Doc:  "check for unchecked errors",
+	Run:  run,
+}
+
