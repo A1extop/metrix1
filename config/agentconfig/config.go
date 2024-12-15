@@ -12,6 +12,7 @@ type Parameters struct {
 	PollInterval   int
 	Key            string
 	RateLimit      int
+	CryptoKey      string
 }
 
 func NewParameters() *Parameters {
@@ -21,6 +22,7 @@ func NewParameters() *Parameters {
 		PollInterval:   0,
 		Key:            "",
 		RateLimit:      0,
+		CryptoKey:      "",
 	}
 }
 
@@ -30,6 +32,7 @@ func (p *Parameters) GetParameters() {
 	pollInterval := flag.Int("p", 2, "frequency of polling metrics from the runtime package in seconds")
 	key := flag.String("k", "", "hash key")
 	rateLimit := flag.Int("l", 1, "number of goroutines")
+	cryptoKey := flag.String("c", "", "hash key")
 
 	flag.Parse()
 	p.AddressHTTP = *addr
@@ -37,6 +40,7 @@ func (p *Parameters) GetParameters() {
 	p.ReportInterval = *reportInterval
 	p.Key = *key
 	p.RateLimit = *rateLimit
+	p.CryptoKey = *cryptoKey
 }
 func (p *Parameters) GetParametersEnvironmentVariables() {
 	addr := os.Getenv("ADDRESS")
@@ -72,5 +76,9 @@ func (p *Parameters) GetParametersEnvironmentVariables() {
 
 	if pollIntervalStr != "" {
 		p.RateLimit = rateLimit
+	}
+	cryptoKey := os.Getenv("CRYPTO_KEY")
+	if cryptoKey != "" {
+		p.CryptoKey = cryptoKey
 	}
 }

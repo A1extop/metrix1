@@ -14,6 +14,7 @@ type Parameters struct {
 	Restore         bool
 	AddrDB          string
 	Key             string
+	CryptoKey       string
 }
 
 func NewParameters() *Parameters {
@@ -23,6 +24,7 @@ func NewParameters() *Parameters {
 		FileStoragePath: "",
 		Restore:         true,
 		Key:             "",
+		CryptoKey:       "",
 	}
 }
 
@@ -33,6 +35,7 @@ func (p *Parameters) GetParameters() {
 	restore := flag.Bool("r", true, "whether or not to load previously saved values from the specified file when the server starts")
 	addrDB := flag.String("d", "", "String with database connection address")
 	key := flag.String("k", "", "hash key")
+	cryptoKey := flag.String("c", "", "hash encryption key")
 
 	flag.Parse()
 	p.AddressHTTP = *addr
@@ -41,6 +44,7 @@ func (p *Parameters) GetParameters() {
 	p.Restore = *restore
 	p.AddrDB = *addrDB
 	p.Key = *key
+	p.CryptoKey = *cryptoKey
 }
 func (p *Parameters) GetParametersEnvironmentVariables() {
 	addr := os.Getenv("ADDRESS")
@@ -78,4 +82,9 @@ func (p *Parameters) GetParametersEnvironmentVariables() {
 	if key != "" {
 		p.Key = key
 	}
+	cryptoKey := os.Getenv("CRYPTO_KEY")
+	if cryptoKey != "" {
+		p.CryptoKey = cryptoKey
+	}
+
 }
