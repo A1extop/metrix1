@@ -1,7 +1,9 @@
 package serverconfig
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -27,8 +29,21 @@ func NewParameters() *Parameters {
 		CryptoKey:       "",
 	}
 }
+func (p *Parameters) LoadFromJSONFile(filePath string) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open config file: %w", err)
+	}
+	defer file.Close()
 
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(p); err != nil {
+		return fmt.Errorf("failed to parse config file: %w", err)
+	}
+	return nil
+}
 func (p *Parameters) GetParameters() {
+	configPath := flag.String("config", "", "path to JSON config file")
 	addr := flag.String("a", "localhost:8080", "address HTTP")
 	storeInterval := flag.Int("i", 300, "the time interval in seconds after which the current server readings are saved to disk")
 	fileStoragePath := flag.String("f", "", "the path to the file where the current values are saved")
@@ -38,6 +53,14 @@ func (p *Parameters) GetParameters() {
 	cryptoKey := flag.String("c", "", "encryption key")
 
 	flag.Parse()
+	if *configPath == "" {
+		*configPath = os.Getenv("CONFIG")
+	}
+	if *configPath != "" {
+		if err := p.LoadFromJSONFile(*configPath); err != nil {
+			log.Printf("Failed to load config from file: %v\n", err)
+		}
+	}
 	p.AddressHTTP = *addr
 	p.StoreInterval = *storeInterval
 	p.FileStoragePath = *fileStoragePath
