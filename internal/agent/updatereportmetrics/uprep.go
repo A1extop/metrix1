@@ -38,11 +38,13 @@ func (u *Updater) Action(ctx context.Context, parameters *config.Parameters) {
 				case <-ctx.Done():
 					return
 				case <-reportTicker.C:
-					u.updater.ReportMetrics(client, "http://"+parameters.AddressHTTP, parameters.Key)
+
+					parameters.AddressHTTP = "http://" + parameters.AddressHTTP
+					u.updater.ReportMetrics(client, parameters)
 				}
 			}
 		}()
 	} else if parameters.RateLimit > 0 {
-		u.updater.Report(ctx, client, parameters.AddressHTTP, parameters.Key, parameters.RateLimit, reportTicker)
+		u.updater.Report(ctx, client, parameters, reportTicker) //parameters.AddressHTTP, parameters.Key, parameters.RateLimit
 	}
 }

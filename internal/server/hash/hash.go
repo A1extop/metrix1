@@ -2,10 +2,14 @@ package hash
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -48,6 +52,51 @@ func WorkingWithHash(key string) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		c.Next()
+	}
+}
+
+func decrypt(data []byte, key string) ([]byte, error) {
+	block, err := aes.NewCipher([]byte(key))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) < aes.BlockSize {
+		return nil, errors.New("ciphertext too short")
+	}
+	iv := data[:aes.BlockSize]
+	data = data[aes.BlockSize:]
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(data, data)
+
+	return data, nil
+}
+func WorkingWithDecryption(key string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if key == "" {
+			c.Next()
+			return
+		}
+		encryptedBody, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to read encrypted body"})
+			log.Println(err)
+			c.Abort()
+			return
+		}
+
+		decryptedBody, err := decrypt(encryptedBody, key)
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Decryption failed"})
+			c.Abort()
+			return
+		}
+
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(decryptedBody))
 
 		c.Next()
 	}
